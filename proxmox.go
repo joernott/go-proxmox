@@ -13,7 +13,7 @@ import (
 	"strconv"
 
 	_ "github.com/bndr/gopencils"
-	"github.com/davecgh/go-spew/spew"
+	_ "github.com/davecgh/go-spew/spew"
 )
 
 type ProxMox struct {
@@ -36,7 +36,7 @@ func NewProxMox(HostName string, UserName string, Password string) (*ProxMox, er
 	var testcookies []*http.Cookie
 	var tr *http.Transport
 	var domain string
-	fmt.Println("!NewProxMox")
+	//fmt.Println("!NewProxMox")
 
 	proxmox = new(ProxMox)
 	proxmox.Hostname = HostName
@@ -118,7 +118,7 @@ func (proxmox ProxMox) Nodes() (NodeList, error) {
 	var node Node
 	var results []interface{}
 
-	fmt.Println("!Nodes")
+	//fmt.Println("!Nodes")
 
 	data, err = proxmox.Get("nodes")
 	if err != nil {
@@ -154,7 +154,7 @@ func (proxmox ProxMox) maxVMId() (float64, error) {
 	var nodes NodeList
 	var node Node
 
-	fmt.Println("!maxVMId")
+	//fmt.Println("!maxVMId")
 	maxId = 0
 
 	nodes, err = proxmox.Nodes()
@@ -178,11 +178,11 @@ func (proxmox ProxMox) PostForm(endpoint string, form url.Values) (map[string]in
 	var data interface{}
 	var req *http.Request
 
-	fmt.Println("!PostForm")
+	//fmt.Println("!PostForm")
 
 	target = proxmox.BaseURL + endpoint
 	//target = "http://requestb.in/1ls8s9d1"
-	fmt.Println("POST form " + target)
+	//fmt.Println("POST form " + target)
 
 	req, err := http.NewRequest("POST", target, bytes.NewBufferString(form.Encode()))
 
@@ -201,7 +201,7 @@ func (proxmox ProxMox) PostForm(endpoint string, form url.Values) (map[string]in
 	//fmt.Print("HTTP status ")
 	//fmt.Println(r.StatusCode)
 	if r.StatusCode != 200 {
-		spew.Dump(r)
+		//spew.Dump(r)
 		return nil, errors.New("HTTP Error " + r.Status)
 		//	} else {
 		//		spew.Dump(r)
@@ -220,7 +220,7 @@ func (proxmox ProxMox) PostForm(endpoint string, form url.Values) (map[string]in
 		return nil, err
 	}
 	m := data.(map[string]interface{})
-	spew.Dump(m)
+	//spew.Dump(m)
 	switch m["data"].(type) {
 	case map[string]interface{}:
 		d := m["data"].(map[string]interface{})
@@ -233,11 +233,11 @@ func (proxmox ProxMox) Get(endpoint string) (map[string]interface{}, error) {
 	var target string
 	var data interface{}
 
-	fmt.Println("!get")
+	//fmt.Println("!get")
 
 	target = proxmox.BaseURL + endpoint
 	//target = "http://requestb.in/1ls8s9d1"
-	fmt.Println("GET " + target)
+	//fmt.Println("GET " + target)
 	r, err := proxmox.client.Get(target)
 	defer r.Body.Close()
 	if err != nil {
@@ -262,11 +262,11 @@ func (proxmox ProxMox) Delete(endpoint string) (map[string]interface{}, error) {
 	var data interface{}
 	var req *http.Request
 
-	fmt.Println("!PostForm")
+	//fmt.Println("!PostForm")
 
 	target = proxmox.BaseURL + endpoint
 	//target = "http://requestb.in/1ls8s9d1"
-	fmt.Println("DELETE " + target)
+	//fmt.Println("DELETE " + target)
 
 	req, err := http.NewRequest("DELETE", target, nil)
 
@@ -282,7 +282,7 @@ func (proxmox ProxMox) Delete(endpoint string) (map[string]interface{}, error) {
 	//fmt.Print("HTTP status ")
 	//fmt.Println(r.StatusCode)
 	if r.StatusCode != 200 {
-		spew.Dump(r)
+		//spew.Dump(r)
 		return nil, errors.New("HTTP Error " + r.Status)
 		//	} else {
 		//		spew.Dump(r)
@@ -301,7 +301,7 @@ func (proxmox ProxMox) Delete(endpoint string) (map[string]interface{}, error) {
 		return nil, err
 	}
 	m := data.(map[string]interface{})
-	spew.Dump(m)
+	//spew.Dump(m)
 	switch m["data"].(type) {
 	case map[string]interface{}:
 		d := m["data"].(map[string]interface{})

@@ -27,7 +27,7 @@ func (storage Storage) CreateVolume(FileName string, DiskSize string, VmId strin
 	var data map[string]interface{}
 	var target string
 
-	fmt.Println("!CreateVolume")
+	//fmt.Println("!CreateVolume")
 
 	form = url.Values{
 		"filename": {FileName},
@@ -43,7 +43,7 @@ func (storage Storage) CreateVolume(FileName string, DiskSize string, VmId strin
 		fmt.Println("Error!!!")
 		return nil, err
 	}
-	fmt.Println("Storage created")
+	//fmt.Println("Storage created")
 	return data, err
 }
 
@@ -55,7 +55,7 @@ func (storage Storage) Volumes() (VolumeList, error) {
 	var volume Volume
 	var results []interface{}
 
-	fmt.Println("!Volumes")
+	//fmt.Println("!Volumes")
 
 	target = "nodes/" + storage.node.Node + "/storage/" + storage.Storage + "/content"
 	data, err = storage.node.proxmox.Get(target)

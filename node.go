@@ -32,7 +32,7 @@ func (node Node) Qemu() (QemuList, error) {
 	var vm QemuVM
 	var results []interface{}
 
-	fmt.Println("!Qemu")
+	//fmt.Println("!Qemu")
 
 	data, err = node.proxmox.Get("nodes/" + node.Node + "/qemu")
 	if err != nil {
@@ -74,7 +74,7 @@ func (node Node) MaxQemuId() (float64, error) {
 	var id float64
 	var err error
 
-	fmt.Println("!MaxQemuId")
+	//fmt.Println("!MaxQemuId")
 
 	id = 0
 	list, err = node.Qemu()
@@ -97,7 +97,7 @@ func (node Node) Storages() (StorageList, error) {
 	var storage Storage
 	var results []interface{}
 
-	fmt.Println("!Storages")
+	//fmt.Println("!Storages")
 
 	data, err = node.proxmox.Get("nodes/" + node.Node + "/storage")
 	if err != nil {
@@ -135,14 +135,14 @@ func (node Node) CreateQemuVM(Sockets int, Cores int, MemorySize int, DiskSize s
 	var form url.Values
 	var target string
 
-	fmt.Println("!CreateQemuVM")
+	//fmt.Println("!CreateQemuVM")
 
 	i, err := node.proxmox.maxVMId()
 	if err != nil {
 		return "", err
 	}
 	newVmId = strconv.FormatFloat(i+1, 'f', 0, 64)
-	fmt.Println("new VM ID: " + newVmId)
+	//fmt.Println("new VM ID: " + newVmId)
 	storageList, err = node.Storages()
 	results, err = storageList["local"].CreateVolume("vm-"+newVmId+"-disk-0.qcow2", DiskSize, newVmId)
 	if err != nil {
@@ -150,7 +150,7 @@ func (node Node) CreateQemuVM(Sockets int, Cores int, MemorySize int, DiskSize s
 	}
 	storageId = results["data"].(string)
 
-	fmt.Println("!CreateVolume")
+	//fmt.Println("!CreateVolume")
 
 	form = url.Values{
 		"vmid":    {newVmId},
@@ -158,7 +158,7 @@ func (node Node) CreateQemuVM(Sockets int, Cores int, MemorySize int, DiskSize s
 		"sockets": {strconv.Itoa(Sockets)},
 		"cores":   {strconv.Itoa(Cores)},
 		"net0":    {"virtio,bridge=vmbr0"},
-		"sata0":   {storageId},
+		"virtio0": {storageId},
 	}
 
 	target = "nodes/" + node.Node + "/qemu"
@@ -167,7 +167,7 @@ func (node Node) CreateQemuVM(Sockets int, Cores int, MemorySize int, DiskSize s
 		fmt.Println("Error creating VM!!!")
 		return "", err
 	}
-	fmt.Println("VM " + newVmId + " created")
+	//fmt.Println("VM " + newVmId + " created")
 
 	//spew.Dump(results)
 	return newVmId, err
