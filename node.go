@@ -125,7 +125,7 @@ func (node Node) Storages() (StorageList, error) {
 	return list, nil
 }
 
-func (node Node) CreateQemuVM(Sockets int, Cores int, MemorySize int, DiskSize string) (string, error) {
+func (node Node) CreateQemuVM(Name string, Sockets int, Cores int, MemorySize int, DiskSize string) (string, error) {
 	var err error
 	var newVmId string
 	var storageList StorageList
@@ -159,6 +159,9 @@ func (node Node) CreateQemuVM(Sockets int, Cores int, MemorySize int, DiskSize s
 		"cores":   {strconv.Itoa(Cores)},
 		"net0":    {"virtio,bridge=vmbr0"},
 		"virtio0": {storageId},
+	}
+	if Name != "" {
+		form.Set("name", Name)
 	}
 
 	target = "nodes/" + node.Node + "/qemu"

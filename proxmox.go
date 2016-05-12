@@ -173,6 +173,64 @@ func (proxmox ProxMox) maxVMId() (float64, error) {
 	return maxId, err
 }
 
+func (proxmox ProxMox) DetermineVMPlacement(cpu int64, cores int64, mem int64, overCommitCPU float64, overCommitMem float64) (Node, error) {
+	var nodeList NodeList
+	var node Node
+	var qemuList QemuList
+	var qemu QemuVM
+	var errNode Node
+	var usedCPUs int64
+	var usedMem int64
+
+	var err error
+
+	nodeList, err = proxmox.Nodes()
+	if err != nil {
+		return errNode, errors.New("Could not get any nodes.")
+	}
+	for _, node = range nodeList {
+		qemuList, err = node.Qemu()
+		if err != nil {
+			return errNode, errors.New("Could not get VMs for node " + node.Node + ".")
+		}
+		for _, qemu = range qemuList {
+			usedCPUs = usedCPUs + int64(qemu.CPUs)
+			usedMem = usedMem + int64(qemu.MaxMem)
+		}
+		if (cpu*cores < int64(node.MaxCPU*(1+overCommitCPU))-usedCPUs) && (mem < int64(node.MaxMem*(1+overCommitMem))-usedMem) {
+			return node, nil
+			//		} else {
+			//			fmt.Printf("CPU: %v < %v, Memory: %v < %v\n", cpu*cores, int64(node.MaxCPU*(1+overCommitCPU))-usedCPUs, mem, int64(node.MaxMem*(1+overCommitMem))-usedMem)
+		}
+	}
+	return errNode, errors.New("Not enough free capacity on any of the nodes.")
+}
+
+func (proxmox ProxMox) FindVM(VmId string) (QemuVM, error) {
+	var nodeList NodeList
+	var node Node
+	var qemuList QemuList
+	var qemu QemuVM
+	var errQemu QemuVM
+	var ok bool
+	var err error
+
+	nodeList, err = proxmox.Nodes()
+	if err != nil {
+		return errQemu, errors.New("Could not get any nodes.")
+	}
+	for _, node = range nodeList {
+		qemuList, err = node.Qemu()
+		if err != nil {
+			return errQemu, errors.New("Could not get VMs for node " + node.Node + ".")
+		}
+		if qemu, ok = qemuList[VmId]; ok {
+			return qemu, nil
+		}
+	}
+	return errQemu, errors.New("VM " + VmId + " not found.")
+}
+
 func (proxmox ProxMox) PostForm(endpoint string, form url.Values) (map[string]interface{}, error) {
 	var target string
 	var data interface{}
@@ -188,6 +246,61 @@ func (proxmox ProxMox) PostForm(endpoint string, form url.Values) (map[string]in
 
 	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	req.Header.Add("Content-Length", strconv.Itoa(len(form.Encode())))
+	if proxmox.connectionCSRFPreventionToken != "" {
+		req.Header.Add("CSRFPreventionToken", proxmox.connectionCSRFPreventionToken)
+	}
+	r, err := proxmox.client.Do(req)
+	defer r.Body.Close()
+	if err != nil {
+		fmt.Println("Error while posting")
+		fmt.Println(err)
+		return nil, err
+	}
+	//fmt.Print("HTTP status ")
+	//fmt.Println(r.StatusCode)
+	if r.StatusCode != 200 {
+		//spew.Dump(r)
+		return nil, errors.New("HTTP Error " + r.Status)
+		//	} else {
+		//		spew.Dump(r)
+	}
+
+	response, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		fmt.Println("Error while reading body")
+		fmt.Println(err)
+		return nil, err
+	}
+	err = json.Unmarshal(response, &data)
+	if err != nil {
+		fmt.Println("Error while processing JSON")
+		fmt.Println(err)
+		return nil, err
+	}
+	m := data.(map[string]interface{})
+	//spew.Dump(m)
+	switch m["data"].(type) {
+	case map[string]interface{}:
+		d := m["data"].(map[string]interface{})
+		return d, nil
+	}
+	return m, nil
+}
+
+func (proxmox ProxMox) Post(endpoint string, input string) (map[string]interface{}, error) {
+	var target string
+	var data interface{}
+	var req *http.Request
+
+	//fmt.Println("!Post")
+
+	target = proxmox.BaseURL + endpoint
+	//target = "http://requestb.in/1ls8s9d1"
+	//fmt.Println("POST form " + target)
+
+	req, err := http.NewRequest("POST", target, bytes.NewBufferString(input))
+
+	req.Header.Add("Content-Length", strconv.Itoa(len(input)))
 	if proxmox.connectionCSRFPreventionToken != "" {
 		req.Header.Add("CSRFPreventionToken", proxmox.connectionCSRFPreventionToken)
 	}
