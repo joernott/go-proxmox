@@ -1,9 +1,11 @@
 package proxmox
 
 import (
-	"fmt"
+	"errors"
+	_ "fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	_ "github.com/davecgh/go-spew/spew"
 )
@@ -136,39 +138,58 @@ func (qemu QemuVM) CurrentStatus() (QemuStatus, error) {
 	var target string
 	var err error
 	var data map[string]interface{}
+	var results map[string]interface{}
 	var status QemuStatus
 
 	//fmt.Println("!QemuStatus ", strconv.FormatFloat(qemu.VMId, 'f', 0, 64))
 
 	target = "nodes/" + qemu.node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/status/current"
 	data, err = qemu.node.proxmox.Get(target)
+	results = data["data"].(map[string]interface{})
 	if err != nil {
 		return status, err
 	}
 	status = QemuStatus{
-		CPU:       data["cpu"].(float64),
-		CPUs:      data["cpus"].(float64),
-		Mem:       data["mem"].(float64),
-		MaxMem:    data["maxmem"].(float64),
-		Disk:      data["disk"].(float64),
-		MaxDisk:   data["maxdisk"].(float64),
-		DiskWrite: data["diskwrite"].(float64),
-		DiskRead:  data["diskread"].(float64),
-		NetIn:     data["netin"].(float64),
-		NetOut:    data["netout"].(float64),
-		Uptime:    data["uptime"].(float64),
-		QmpStatus: data["qmpstatus"].(string),
-		Status:    data["status"].(string),
-		Template:  data["template"].(string),
+		CPU:       results["cpu"].(float64),
+		CPUs:      results["cpus"].(float64),
+		Mem:       results["mem"].(float64),
+		MaxMem:    results["maxmem"].(float64),
+		Disk:      results["disk"].(float64),
+		MaxDisk:   results["maxdisk"].(float64),
+		DiskWrite: results["diskwrite"].(float64),
+		DiskRead:  results["diskread"].(float64),
+		NetIn:     results["netin"].(float64),
+		NetOut:    results["netout"].(float64),
+		Uptime:    results["uptime"].(float64),
+		QmpStatus: results["qmpstatus"].(string),
+		Status:    results["status"].(string),
+		Template:  results["template"].(string),
 	}
 	return status, nil
+}
+
+func (qemu QemuVM) WaitForStatus(status string, timeout int) error {
+	var i int
+	var err error
+	var qStatus QemuStatus
+	for i = 0; i < timeout; i++ {
+		qStatus, err = qemu.CurrentStatus()
+		if err != nil {
+			return err
+		}
+		if qStatus.Status == status {
+			return nil
+		}
+		time.Sleep(time.Second * 1)
+	}
+	return errors.New("Timeout reached")
 }
 
 func (qemu QemuVM) Start() error {
 	var target string
 	var err error
 
-	fmt.Println("!QemuStart ", strconv.FormatFloat(qemu.VMId, 'f', 0, 64))
+	//fmt.Println("!QemuStart ", strconv.FormatFloat(qemu.VMId, 'f', 0, 64))
 
 	target = "nodes/" + qemu.node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/status/start"
 	_, err = qemu.node.proxmox.Post(target, "")
