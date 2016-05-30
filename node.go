@@ -20,7 +20,7 @@ type Node struct {
 	NodeType string
 	Disk     float64
 	MaxMem   float64
-	proxmox  ProxMox
+	Proxmox  ProxMox
 }
 
 type NodeList map[string]Node
@@ -34,7 +34,7 @@ func (node Node) Qemu() (QemuList, error) {
 
 	//fmt.Println("!Qemu")
 
-	data, err = node.proxmox.Get("nodes/" + node.Node + "/qemu")
+	data, err = node.Proxmox.Get("nodes/" + node.Node + "/qemu")
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +60,7 @@ func (node Node) Qemu() (QemuList, error) {
 			VMId:      v["vmid"].(float64),
 			DiskRead:  v["diskread"].(float64),
 			Uptime:    v["uptime"].(float64),
-			node:      node,
+			Node:      node,
 		}
 		list[strconv.FormatFloat(vm.VMId, 'f', 0, 64)] = vm
 	}
@@ -99,7 +99,7 @@ func (node Node) Storages() (StorageList, error) {
 
 	//fmt.Println("!Storages")
 
-	data, err = node.proxmox.Get("nodes/" + node.Node + "/storage")
+	data, err = node.Proxmox.Get("nodes/" + node.Node + "/storage")
 	if err != nil {
 		return nil, err
 	}
@@ -117,7 +117,7 @@ func (node Node) Storages() (StorageList, error) {
 			Storage:     v["storage"].(string),
 			Used:        v["used"].(float64),
 			Avail:       v["avail"].(float64),
-			node:        node,
+			Node:        node,
 		}
 		list[storage.Storage] = storage
 	}
@@ -137,7 +137,7 @@ func (node Node) CreateQemuVM(Name string, Sockets int, Cores int, MemorySize in
 
 	//fmt.Println("!CreateQemuVM")
 
-	i, err := node.proxmox.maxVMId()
+	i, err := node.Proxmox.maxVMId()
 	if err != nil {
 		return "", err
 	}
@@ -165,7 +165,7 @@ func (node Node) CreateQemuVM(Name string, Sockets int, Cores int, MemorySize in
 	}
 
 	target = "nodes/" + node.Node + "/qemu"
-	results, err = node.proxmox.PostForm(target, form)
+	results, err = node.Proxmox.PostForm(target, form)
 	if err != nil {
 		fmt.Println("Error creating VM!!!")
 		return "", err
@@ -174,4 +174,107 @@ func (node Node) CreateQemuVM(Name string, Sockets int, Cores int, MemorySize in
 
 	//spew.Dump(results)
 	return newVmId, err
+}
+
+func (node Node) VZDump(VmId string, BWLimit int, Compress string, IONice int, LockWait int, Mode string) (string, error) {
+	var form url.Values
+	var target string
+	var err error
+	var results map[string]interface{}
+
+	form = url.Values{
+		"vmid":     {VmId},
+		"compress": {Compress},
+		"lockwait": {strconv.Itoa(LockWait)},
+		"mode":     {Mode},
+	}
+	if BWLimit > 0 {
+		form.Set("bwlimit", strconv.Itoa(BWLimit))
+	}
+	if IONice > 0 {
+		form.Set("ionice", strconv.Itoa(IONice))
+	}
+	target = "nodes/" + node.Node + "/vzdump"
+	results, err = node.Proxmox.PostForm(target, form)
+	//spew.Dump(results)
+	if err != nil {
+		fmt.Println("Error dumping VM!")
+		return "", err
+	}
+	return results["data"].(string), nil
+}
+
+func (node Node) Tasks(Limit int, Start int, UserFilter string, VmId string) (TaskList, error) {
+	var err error
+	var target string
+	var data map[string]interface{}
+	var list TaskList
+	var task Task
+	var results []interface{}
+
+	//fmt.Println("!Tasks")
+	target = "nodes/" + node.Node + "/tasks?"
+	if Limit > 0 {
+		target = target + "limit=" + strconv.Itoa(Limit) + "&"
+	}
+	if Start > 0 {
+		target = target + "start=" + strconv.Itoa(Start) + "&"
+	}
+	if UserFilter != "" {
+		target = target + "userfilter=" + UserFilter + "&"
+	}
+	if VmId != "" {
+		target = target + "vmid=" + VmId + "&"
+	}
+	target = target[0 : len(target)-1]
+	data, err = node.Proxmox.Get(target)
+	if err != nil {
+		return nil, err
+	}
+	list = make(TaskList)
+	results = data["data"].([]interface{})
+	for _, v0 := range results {
+		v := v0.(map[string]interface{})
+		task = Task{
+			UPid:      v["upid"].(string),
+			Type:      v["type"].(string),
+			Status:    v["status"].(string),
+			PID:       v["pid"].(float64),
+			PStart:    v["pstart"].(float64),
+			StartTime: v["starttime"].(float64),
+			EndTime:   v["endtime"].(float64),
+			ID:        v["id"].(string),
+			Node:      node,
+		}
+		list[task.UPid] = task
+	}
+
+	return list, nil
+}
+
+func (node Node) GetTask(UPid string) (Task, error) {
+	var target string
+	var err error
+	var results map[string]interface{}
+	var task Task
+
+	target = "nodes/" + node.Node + "/tasks/" + UPid
+	results, err = node.Proxmox.Get(target)
+	if err != nil {
+		fmt.Println("Error getting Task!")
+		return task, err
+	}
+	task = Task{
+		UPid:      results["upid"].(string),
+		Type:      results["type"].(string),
+		Status:    results["status"].(string),
+		PID:       results["pid"].(float64),
+		PStart:    results["pstart"].(float64),
+		StartTime: results["starttime"].(float64),
+		EndTime:   results["endtime"].(float64),
+		ID:        results["id"].(string),
+		Node:      node,
+	}
+	return task, nil
+
 }

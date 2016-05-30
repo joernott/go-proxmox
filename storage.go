@@ -16,7 +16,7 @@ type Storage struct {
 	Storage     string
 	Used        float64
 	Avail       float64
-	node        Node
+	Node        Node
 }
 
 type StorageList map[string]Storage
@@ -37,8 +37,8 @@ func (storage Storage) CreateVolume(FileName string, DiskSize string, VmId strin
 		"vmid":   {VmId},
 	}
 
-	target = "nodes/" + storage.node.Node + "/storage/" + storage.Storage + "/content"
-	data, err = storage.node.proxmox.PostForm(target, form)
+	target = "nodes/" + storage.Node.Node + "/storage/" + storage.Storage + "/content"
+	data, err = storage.Node.Proxmox.PostForm(target, form)
 	if err != nil {
 		fmt.Println("Error!!!")
 		return nil, err
@@ -57,8 +57,8 @@ func (storage Storage) Volumes() (VolumeList, error) {
 
 	//fmt.Println("!Volumes")
 
-	target = "nodes/" + storage.node.Node + "/storage/" + storage.Storage + "/content"
-	data, err = storage.node.proxmox.Get(target)
+	target = "nodes/" + storage.Node.Node + "/storage/" + storage.Storage + "/content"
+	data, err = storage.Node.Proxmox.Get(target)
 	if err != nil {
 		return nil, err
 	}
@@ -78,6 +78,5 @@ func (storage Storage) Volumes() (VolumeList, error) {
 		}
 		list[volume.VolId] = volume
 	}
-
 	return list, nil
 }

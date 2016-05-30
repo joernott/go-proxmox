@@ -27,7 +27,7 @@ type QemuVM struct {
 	VMId      float64
 	DiskRead  float64
 	Uptime    float64
-	node      Node
+	Node      Node
 }
 
 type QemuList map[string]QemuVM
@@ -69,8 +69,8 @@ func (qemu QemuVM) Delete() (map[string]interface{}, error) {
 
 	//fmt.Print("!QemuDelete ", qemu.VMId)
 
-	target = "nodes/" + qemu.node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64)
-	data, err = qemu.node.proxmox.Delete(target)
+	target = "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64)
+	data, err = qemu.Node.Proxmox.Delete(target)
 	if err != nil {
 		return nil, err
 	}
@@ -98,8 +98,8 @@ func (qemu QemuVM) Config() (QemuConfig, error) {
 
 	//fmt.Print("!QemuConfig ", qemu.VMId)
 
-	target = "nodes/" + qemu.node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/config"
-	data, err = qemu.node.proxmox.Get(target)
+	target = "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/config"
+	data, err = qemu.Node.Proxmox.Get(target)
 	results = data["data"].(map[string]interface{})
 	if err != nil {
 		return config, err
@@ -143,8 +143,8 @@ func (qemu QemuVM) CurrentStatus() (QemuStatus, error) {
 
 	//fmt.Println("!QemuStatus ", strconv.FormatFloat(qemu.VMId, 'f', 0, 64))
 
-	target = "nodes/" + qemu.node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/status/current"
-	data, err = qemu.node.proxmox.Get(target)
+	target = "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/status/current"
+	data, err = qemu.Node.Proxmox.Get(target)
 	results = data["data"].(map[string]interface{})
 	if err != nil {
 		return status, err
@@ -191,8 +191,8 @@ func (qemu QemuVM) Start() error {
 
 	//fmt.Println("!QemuStart ", strconv.FormatFloat(qemu.VMId, 'f', 0, 64))
 
-	target = "nodes/" + qemu.node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/status/start"
-	_, err = qemu.node.proxmox.Post(target, "")
+	target = "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/status/start"
+	_, err = qemu.Node.Proxmox.Post(target, "")
 	return err
 }
 
@@ -202,8 +202,8 @@ func (qemu QemuVM) Stop() error {
 
 	//fmt.Print("!QemuStop ", qemu.VMId)
 
-	target = "nodes/" + qemu.node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/status/stop"
-	_, err = qemu.node.proxmox.Post(target, "")
+	target = "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/status/stop"
+	_, err = qemu.Node.Proxmox.Post(target, "")
 	return err
 }
 
@@ -213,8 +213,8 @@ func (qemu QemuVM) Shutdown() error {
 
 	//fmt.Print("!QemuShutdown ", qemu.VMId)
 
-	target = "nodes/" + qemu.node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/status/shutdown"
-	_, err = qemu.node.proxmox.Post(target, "")
+	target = "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/status/shutdown"
+	_, err = qemu.Node.Proxmox.Post(target, "")
 	return err
 }
 
@@ -224,8 +224,8 @@ func (qemu QemuVM) Suspend() error {
 
 	//fmt.Print("!QemuSuspend ", qemu.VMId)
 
-	target = "nodes/" + qemu.node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/status/suspend"
-	_, err = qemu.node.proxmox.Post(target, "")
+	target = "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/status/suspend"
+	_, err = qemu.Node.Proxmox.Post(target, "")
 	return err
 }
 
@@ -235,7 +235,7 @@ func (qemu QemuVM) Resume() error {
 
 	//fmt.Print("!QemuResume ", qemu.VMId)
 
-	target = "nodes/" + qemu.node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/status/resume"
-	_, err = qemu.node.proxmox.Post(target, "")
+	target = "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/status/resume"
+	_, err = qemu.Node.Proxmox.Post(target, "")
 	return err
 }

@@ -140,7 +140,7 @@ func (proxmox ProxMox) Nodes() (NodeList, error) {
 			NodeType: v["type"].(string),
 			Disk:     v["disk"].(float64),
 			MaxMem:   v["maxmem"].(float64),
-			proxmox:  proxmox,
+			Proxmox:  proxmox,
 		}
 		list[node.Node] = node
 	}
