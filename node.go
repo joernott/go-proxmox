@@ -9,21 +9,25 @@ import (
 )
 
 type Node struct {
-	Mem      float64
-	MaxDisk  float64
-	Node     string
-	MaxCPU   float64
-	Uptime   float64
-	Id       string
-	CPU      float64
-	Level    string
-	NodeType string
-	Disk     float64
-	MaxMem   float64
+	Mem      float64 `json:"mem"`
+	MaxDisk  float64 `json:"maxdisk"`
+	Node     string  `json:"node"`
+	MaxCPU   float64 `json:"maxcpu"`
+	Uptime   float64 `json:"uptime"`
+	Id       string  `json:"id"`
+	CPU      float64 `json:"cpu"`
+	Level    string  `json:"level"`
+	NodeType string  `json:"nodetype"`
+	Disk     float64 `json:"disk"`
+	MaxMem   float64 `json:"maxmem"`
 	Proxmox  ProxMox
 }
 
 type NodeList map[string]Node
+
+type NodeListResult struct {
+	Data NodeList `json:"data"`
+}
 
 func (node Node) Qemu() (QemuList, error) {
 	var err error
@@ -244,37 +248,10 @@ func (node Node) Tasks(Limit int, Start int, UserFilter string, VmId string) (Ta
 			StartTime: v["starttime"].(float64),
 			EndTime:   v["endtime"].(float64),
 			ID:        v["id"].(string),
-			Node:      node,
+			proxmox:   node.Proxmox,
 		}
 		list[task.UPid] = task
 	}
 
 	return list, nil
-}
-
-func (node Node) GetTask(UPid string) (Task, error) {
-	var target string
-	var err error
-	var results map[string]interface{}
-	var task Task
-
-	target = "nodes/" + node.Node + "/tasks/" + UPid
-	results, err = node.Proxmox.Get(target)
-	if err != nil {
-		fmt.Println("Error getting Task!")
-		return task, err
-	}
-	task = Task{
-		UPid:      results["upid"].(string),
-		Type:      results["type"].(string),
-		Status:    results["status"].(string),
-		PID:       results["pid"].(float64),
-		PStart:    results["pstart"].(float64),
-		StartTime: results["starttime"].(float64),
-		EndTime:   results["endtime"].(float64),
-		ID:        results["id"].(string),
-		Node:      node,
-	}
-	return task, nil
-
 }

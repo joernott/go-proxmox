@@ -231,6 +231,81 @@ func (proxmox ProxMox) FindVM(VmId string) (QemuVM, error) {
 	return errQemu, errors.New("VM " + VmId + " not found.")
 }
 
+func (proxmox ProxMox) Tasks() (TaskList, error) {
+	var err error
+	var target string
+	var data map[string]interface{}
+	var list TaskList
+	var task Task
+	var results []interface{}
+
+	//fmt.Println("!Tasks")
+	target = "cluster/tasks"
+	data, err = proxmox.Get(target)
+	if err != nil {
+		return nil, err
+	}
+	list = make(TaskList)
+	//spew.Dump(data)
+	results = data["data"].([]interface{})
+	for _, v0 := range results {
+		v := v0.(map[string]interface{})
+		//spew.Dump(v)
+		task = Task{
+			UPid:    v["upid"].(string),
+			Type:    v["type"].(string),
+			ID:      v["id"].(string),
+			proxmox: proxmox,
+		}
+		switch v["status"].(type) {
+		default:
+			task.Status = ""
+		case string:
+			task.Status = v["status"].(string)
+		}
+		switch v["exitstatus"].(type) {
+		default:
+			task.ExitStatus = ""
+		case string:
+			task.ExitStatus = v["exitstatus"].(string)
+		}
+		switch v["pstart"].(type) {
+		default:
+			task.PStart = 0
+		case float64:
+			task.PStart = v["pstart"].(float64)
+		}
+		switch v["starttime"].(type) {
+		default:
+			task.StartTime = 0
+		case float64:
+			task.StartTime = v["starttime"].(float64)
+		case string:
+			s := v["starttime"].(string)
+			task.StartTime, err = strconv.ParseFloat(s, 64)
+		}
+		switch v["endtime"].(type) {
+		default:
+			task.EndTime = 0
+		case float64:
+			task.EndTime = v["endtime"].(float64)
+		case string:
+			s := v["endtime"].(string)
+			task.EndTime, err = strconv.ParseFloat(s, 64)
+		}
+		switch v["pid"].(type) {
+		default:
+			task.PID = 0
+		case float64:
+			task.PID = v["pid"].(float64)
+		}
+
+		list[task.UPid] = task
+	}
+
+	return list, nil
+}
+
 func (proxmox ProxMox) PostForm(endpoint string, form url.Values) (map[string]interface{}, error) {
 	var target string
 	var data interface{}
@@ -368,6 +443,26 @@ func (proxmox ProxMox) Get(endpoint string) (map[string]interface{}, error) {
 	//d := m["data"].(map[string]interface{})
 	//spew.Dump(m)
 	return m, nil
+}
+
+func (proxmox ProxMox) GetBytes(endpoint string) ([]byte, error) {
+	var target string
+
+	//fmt.Println("!getBytes")
+
+	target = proxmox.BaseURL + endpoint
+	//target = "http://requestb.in/1ls8s9d1"
+	//fmt.Println("GET " + target)
+	r, err := proxmox.client.Get(target)
+	defer r.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+	response, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return nil, err
+	}
+	return response, nil
 }
 
 func (proxmox ProxMox) Delete(endpoint string) (map[string]interface{}, error) {

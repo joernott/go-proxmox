@@ -8,14 +8,14 @@ import (
 )
 
 type Storage struct {
-	StorageType string
-	Active      float64
-	Total       float64
-	Content     string
-	Shared      float64
-	Storage     string
-	Used        float64
-	Avail       float64
+	StorageType string  `json:"type"`
+	Active      float64 `json:"active"`
+	Total       float64 `json:"total"`
+	Content     string  `json:"content"`
+	Shared      float64 `json:"shared"`
+	Storage     string  `json:"storage"`
+	Used        float64 `json:"used"`
+	Avail       float64 `json:"avail"`
 	Node        Node
 }
 

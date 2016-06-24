@@ -11,22 +11,22 @@ import (
 )
 
 type QemuVM struct {
-	Mem       float64
-	CPUs      float64
-	NetOut    float64
-	PID       string
-	Disk      float64
-	MaxMem    float64
-	Status    string
-	Template  string
-	NetIn     float64
-	MaxDisk   float64
-	Name      string
-	DiskWrite float64
-	CPU       float64
-	VMId      float64
-	DiskRead  float64
-	Uptime    float64
+	Mem       float64 `json:"mem"`
+	CPUs      float64 `json:"cpus"`
+	NetOut    float64 `json:"netout"`
+	PID       string  `json:"pid"`
+	Disk      float64 `json:"disk"`
+	MaxMem    float64 `json:"maxmem"`
+	Status    string  `json:"status"`
+	Template  string  `json:"template"`
+	NetIn     float64 `json:"netin"`
+	MaxDisk   float64 `json:"maxdisk"`
+	Name      string  `json:"name"`
+	DiskWrite float64 `json:"diskwrite"`
+	CPU       float64 `json:"cpu"`
+	VMId      float64 `json:"vmid"`
+	DiskRead  float64 `json:"diskread"`
+	Uptime    float64 `json:"uptime"`
 	Node      Node
 }
 
@@ -35,31 +35,31 @@ type QemuList map[string]QemuVM
 type QemuNet map[string]string
 
 type QemuConfig struct {
-	Bootdisk string
-	Cores    float64
-	Digest   string
-	Memory   float64
+	Bootdisk string  `json:"bootdisk"`
+	Cores    float64 `json:"cores"`
+	Digest   string  `json:"digest"`
+	Memory   float64 `json:"memory"`
 	Net      map[string]QemuNet
-	SMBios1  string
-	Sockets  float64
-	Disks    map[string]string
+	SMBios1  string            `json:"smbios1"`
+	Sockets  float64           `json:"sockets"`
+	Disks    map[string]string `json:"disks"`
 }
 
 type QemuStatus struct {
-	CPU       float64
-	CPUs      float64
-	Mem       float64
-	MaxMem    float64
-	Disk      float64
-	MaxDisk   float64
-	DiskWrite float64
-	DiskRead  float64
-	NetIn     float64
-	NetOut    float64
-	Uptime    float64
-	QmpStatus string
-	Status    string
-	Template  string
+	CPU       float64 `json:"cpu"`
+	CPUs      float64 `json:"cpus"`
+	Mem       float64 `json:"mem"`
+	MaxMem    float64 `json:"maxmem"`
+	Disk      float64 `json:"disk"`
+	MaxDisk   float64 `json:"maxdisk"`
+	DiskWrite float64 `json:"diskwrite"`
+	DiskRead  float64 `json:"diskread"`
+	NetIn     float64 `json:"netin"`
+	NetOut    float64 `json:"netout"`
+	Uptime    float64 `json:"uptime"`
+	QmpStatus string  `json:"qmpstatus"`
+	Status    string  `json:"status"`
+	Template  string  `json:"template"`
 }
 
 func (qemu QemuVM) Delete() (map[string]interface{}, error) {
@@ -145,10 +145,10 @@ func (qemu QemuVM) CurrentStatus() (QemuStatus, error) {
 
 	target = "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/status/current"
 	data, err = qemu.Node.Proxmox.Get(target)
-	results = data["data"].(map[string]interface{})
 	if err != nil {
 		return status, err
 	}
+	results = data["data"].(map[string]interface{})
 	status = QemuStatus{
 		CPU:       results["cpu"].(float64),
 		CPUs:      results["cpus"].(float64),
