@@ -18,7 +18,7 @@ type QemuVM struct {
 	Disk      float64 `json:"disk"`
 	MaxMem    float64 `json:"maxmem"`
 	Status    string  `json:"status"`
-	Template  string  `json:"template"`
+	Template  float64 `json:"template"`
 	NetIn     float64 `json:"netin"`
 	MaxDisk   float64 `json:"maxdisk"`
 	Name      string  `json:"name"`
