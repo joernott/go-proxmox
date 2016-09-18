@@ -11,6 +11,7 @@ import (
 	"net/http/cookiejar"
 	"net/url"
 	"strconv"
+	"strings"
 
 	_ "github.com/bndr/gopencils"
 	_ "github.com/davecgh/go-spew/spew"
@@ -38,6 +39,10 @@ func NewProxMox(HostName string, UserName string, Password string) (*ProxMox, er
 	var domain string
 	//fmt.Println("!NewProxMox")
 
+	if !strings.HasSuffix(UserName, "@pam") && !strings.HasSuffix(UserName, "@pve") {
+		UserName = UserName + "@pam"
+	}
+
 	proxmox = new(ProxMox)
 	proxmox.Hostname = HostName
 	proxmox.Username = UserName
@@ -54,7 +59,7 @@ func NewProxMox(HostName string, UserName string, Password string) (*ProxMox, er
 	}
 	proxmox.client = &http.Client{Transport: tr}
 	form = url.Values{
-		"username": {proxmox.Username + "@pam"},
+		"username": {proxmox.Username},
 		"password": {proxmox.password},
 	}
 
