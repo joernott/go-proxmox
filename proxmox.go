@@ -178,6 +178,15 @@ func (proxmox ProxMox) maxVMId() (float64, error) {
 	return maxId, err
 }
 
+func (proxmox ProxMox) NextVMId() (float64, error) {
+	max, err := proxmox.maxVMId()
+	if err != nil {
+		return max, err
+	}
+
+	return max + 1, nil
+}
+
 func (proxmox ProxMox) DetermineVMPlacement(cpu int64, cores int64, mem int64, overCommitCPU float64, overCommitMem float64) (Node, error) {
 	var nodeList NodeList
 	var node Node
