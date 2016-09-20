@@ -3,7 +3,6 @@ package proxmox
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strings"
 	"time"
 
@@ -40,12 +39,10 @@ func (task Task) GetStatus() (string, string, error) {
 	//fmt.Println("target  " + target)
 	raw, err = task.proxmox.GetBytes(target)
 	if err != nil {
-		fmt.Println("Error getting Task Status!")
 		return "", "", err
 	}
 	err = json.Unmarshal(raw, &data)
 	if err != nil {
-		fmt.Println(string(raw))
 		return "", "", err
 	}
 	return data.Data.Status, data.Data.ExitStatus, nil
@@ -58,7 +55,6 @@ func (task Task) WaitForStatus(status string, timeout int) (string, error) {
 	var exitstatus string
 	for i = 0; i < timeout; i++ {
 		actstatus, exitstatus, err = task.GetStatus()
-		fmt.Println(actstatus)
 		if err != nil {
 			return "", err
 		}
