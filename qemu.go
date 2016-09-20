@@ -2,7 +2,7 @@ package proxmox
 
 import (
 	"errors"
-	_ "fmt"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -177,6 +177,7 @@ func (qemu QemuVM) WaitForStatus(status string, timeout int) error {
 		if err != nil {
 			return err
 		}
+
 		if qStatus.Status == status {
 			return nil
 		}
@@ -238,4 +239,28 @@ func (qemu QemuVM) Resume() error {
 	target = "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/status/resume"
 	_, err = qemu.Node.Proxmox.Post(target, "")
 	return err
+}
+
+func (qemu QemuVM) Clone(newId float64, name string, targetName string) (string, error) {
+	var target string
+	var err error
+
+	newVMID := strconv.FormatFloat(newId, 'f', 0, 64)
+
+	target = "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/clone"
+
+	form := url.Values{
+		"newid":  {newVMID},
+		"name":   {name},
+		"target": {targetName},
+	}
+
+	data, err := qemu.Node.Proxmox.PostForm(target, form)
+	if err != err {
+		return "", err
+	}
+
+	UPid := data["data"].(string)
+
+	return UPid, nil
 }
