@@ -55,7 +55,6 @@ func (node Node) Qemu() (QemuList, error) {
 			Disk:      v["disk"].(float64),
 			MaxMem:    v["maxmem"].(float64),
 			Status:    v["status"].(string),
-			Template:  v["template"].(string),
 			NetIn:     v["netin"].(float64),
 			MaxDisk:   v["maxdisk"].(float64),
 			Name:      v["name"].(string),
@@ -66,6 +65,14 @@ func (node Node) Qemu() (QemuList, error) {
 			Uptime:    v["uptime"].(float64),
 			Node:      node,
 		}
+
+		switch v["template"].(type) {
+		case float64:
+			vm.Template = v["template"].(float64)
+		default:
+			vm.Template = 0
+		}
+
 		list[strconv.FormatFloat(vm.VMId, 'f', 0, 64)] = vm
 	}
 
