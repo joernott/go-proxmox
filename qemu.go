@@ -270,3 +270,39 @@ func (qemu QemuVM) Clone(newId float64, name string, targetName string) (string,
 
 	return UPid, nil
 }
+
+func (qemu QemuVM) Snapshot(name string, includeRAM bool) (string, error) {
+	target := "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/snapshot"
+
+	vmstate := "0"
+	if includeRAM == true {
+		vmstate = "1"
+	}
+
+	form := url.Values{
+		"snapname": {name},
+		"vmstate":  {vmstate},
+	}
+
+	data, err := qemu.Node.Proxmox.PostForm(target, form)
+	if err != nil {
+		return "", err
+	}
+
+	UPid := data["data"].(string)
+
+	return UPid, nil
+}
+
+func (qemu QemuVM) Rollback(name string) (string, error) {
+	target := "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/snapshot/" + name + "/rollback"
+
+	data, err := qemu.Node.Proxmox.Post(target, "")
+	if err != nil {
+		return "", err
+	}
+
+	UPid := data["data"].(string)
+
+	return UPid, nil
+}
