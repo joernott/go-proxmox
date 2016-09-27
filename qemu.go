@@ -197,15 +197,21 @@ func (qemu QemuVM) Start() error {
 	return err
 }
 
-func (qemu QemuVM) Stop() error {
+func (qemu QemuVM) Stop() (string, error) {
 	var target string
 	var err error
 
 	//fmt.Print("!QemuStop ", qemu.VMId)
 
 	target = "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/status/stop"
-	_, err = qemu.Node.Proxmox.Post(target, "")
-	return err
+	data, err := qemu.Node.Proxmox.Post(target, "")
+	if err != nil {
+		return "", err
+	}
+
+	UPid := data["data"].(string)
+
+	return UPid, nil
 }
 
 func (qemu QemuVM) Shutdown() error {
