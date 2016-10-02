@@ -106,11 +106,22 @@ func (qemu QemuVM) Config() (QemuConfig, error) {
 	}
 	config = QemuConfig{
 		Bootdisk: results["bootdisk"].(string),
-		Cores:    results["cores"].(float64),
 		Digest:   results["digest"].(string),
 		Memory:   results["memory"].(float64),
-		Sockets:  results["sockets"].(float64),
 		SMBios1:  results["smbios1"].(string),
+	}
+
+	switch results["cores"].(type) {
+	default:
+		config.Cores = 1
+	case float64:
+		config.Cores = results["cores"].(float64)
+	}
+	switch results["sockets"].(type) {
+	default:
+		config.Sockets = 1
+	case float64:
+		config.Sockets = results["sockets"].(float64)
 	}
 	disktype := [3]string{"virtio", "sata", "ide"}
 	disknum := [4]string{"0", "1", "2", "3"}
@@ -248,6 +259,10 @@ func (qemu QemuVM) Resume() error {
 }
 
 func (qemu QemuVM) Clone(newId float64, name string, targetName string) (string, error) {
+	return qemu.CloneToPool(newId, name, targetName, "")
+}
+
+func (qemu QemuVM) CloneToPool(newId float64, name string, targetName string, pool string) (string, error) {
 	var target string
 	var err error
 
@@ -259,6 +274,10 @@ func (qemu QemuVM) Clone(newId float64, name string, targetName string) (string,
 		"newid":  {newVMID},
 		"name":   {name},
 		"target": {targetName},
+	}
+
+	if pool != "" {
+		form.Add("pool", pool)
 	}
 
 	data, err := qemu.Node.Proxmox.PostForm(target, form)
