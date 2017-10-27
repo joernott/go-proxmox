@@ -431,6 +431,21 @@ func (proxmox ProxMox) Post(endpoint string, input string) (map[string]interface
 	return m, nil
 }
 
+func (proxmox ProxMox) GetRaw(endpoint string) ([]byte, error) {
+	target := proxmox.BaseURL + endpoint
+	r, err := proxmox.client.Get(target)
+	defer r.Body.Close()
+	if err != nil {
+		return nil, err
+	}
+	response, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return response, nil
+}
+
 func (proxmox ProxMox) Get(endpoint string) (map[string]interface{}, error) {
 	var target string
 	var data interface{}
