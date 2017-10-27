@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"strings"
 	"time"
-
-	_ "github.com/davecgh/go-spew/spew"
 )
 
 type Task struct {

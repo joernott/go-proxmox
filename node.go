@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
-
-	_ "github.com/davecgh/go-spew/spew"
 )
 
 type Node struct {
@@ -114,7 +112,6 @@ func (node Node) Storages() (StorageList, error) {
 	if err != nil {
 		return nil, err
 	}
-	//spew.Dump(data)
 	list = make(StorageList)
 	results = data["data"].([]interface{})
 	for _, v0 := range results {
@@ -183,7 +180,6 @@ func (node Node) CreateQemuVM(Name string, Sockets int, Cores int, MemorySize in
 	}
 	//fmt.Println("VM " + newVmId + " created")
 
-	//spew.Dump(results)
 	return newVmId, err
 }
 
@@ -207,7 +203,6 @@ func (node Node) VZDump(VmId string, BWLimit int, Compress string, IONice int, L
 	}
 	target = "nodes/" + node.Node + "/vzdump"
 	results, err = node.Proxmox.PostForm(target, form)
-	//spew.Dump(results)
 	if err != nil {
 		fmt.Println("Error dumping VM!")
 		return "", err

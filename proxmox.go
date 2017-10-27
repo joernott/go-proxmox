@@ -14,7 +14,6 @@ import (
 	"strings"
 
 	_ "github.com/bndr/gopencils"
-	_ "github.com/davecgh/go-spew/spew"
 )
 
 type ProxMox struct {
@@ -260,11 +259,9 @@ func (proxmox ProxMox) Tasks() (TaskList, error) {
 		return nil, err
 	}
 	list = make(TaskList)
-	//spew.Dump(data)
 	results = data["data"].([]interface{})
 	for _, v0 := range results {
 		v := v0.(map[string]interface{})
-		//spew.Dump(v)
 		task = Task{
 			UPid:    v["upid"].(string),
 			Type:    v["type"].(string),
@@ -348,10 +345,8 @@ func (proxmox ProxMox) PostForm(endpoint string, form url.Values) (map[string]in
 	//fmt.Print("HTTP status ")
 	//fmt.Println(r.StatusCode)
 	if r.StatusCode != 200 {
-		//spew.Dump(r)
 		return nil, errors.New("HTTP Error " + r.Status)
 		//	} else {
-		//		spew.Dump(r)
 	}
 
 	response, err := ioutil.ReadAll(r.Body)
@@ -367,7 +362,6 @@ func (proxmox ProxMox) PostForm(endpoint string, form url.Values) (map[string]in
 		return nil, err
 	}
 	m := data.(map[string]interface{})
-	//spew.Dump(m)
 	switch m["data"].(type) {
 	case map[string]interface{}:
 		d := m["data"].(map[string]interface{})
@@ -403,10 +397,8 @@ func (proxmox ProxMox) Post(endpoint string, input string) (map[string]interface
 	//fmt.Print("HTTP status ")
 	//fmt.Println(r.StatusCode)
 	if r.StatusCode != 200 {
-		//spew.Dump(r)
 		return nil, errors.New("HTTP Error " + r.Status)
 		//	} else {
-		//		spew.Dump(r)
 	}
 
 	response, err := ioutil.ReadAll(r.Body)
@@ -422,7 +414,6 @@ func (proxmox ProxMox) Post(endpoint string, input string) (map[string]interface
 		return nil, err
 	}
 	m := data.(map[string]interface{})
-	//spew.Dump(m)
 	switch m["data"].(type) {
 	case map[string]interface{}:
 		d := m["data"].(map[string]interface{})
@@ -470,7 +461,6 @@ func (proxmox ProxMox) Get(endpoint string) (map[string]interface{}, error) {
 	}
 	m := data.(map[string]interface{})
 	//d := m["data"].(map[string]interface{})
-	//spew.Dump(m)
 	return m, nil
 }
 
@@ -519,10 +509,8 @@ func (proxmox ProxMox) Delete(endpoint string) (map[string]interface{}, error) {
 	//fmt.Print("HTTP status ")
 	//fmt.Println(r.StatusCode)
 	if r.StatusCode != 200 {
-		//spew.Dump(r)
 		return nil, errors.New("HTTP Error " + r.Status)
 		//	} else {
-		//		spew.Dump(r)
 	}
 
 	response, err := ioutil.ReadAll(r.Body)
@@ -538,7 +526,6 @@ func (proxmox ProxMox) Delete(endpoint string) (map[string]interface{}, error) {
 		return nil, err
 	}
 	m := data.(map[string]interface{})
-	//spew.Dump(m)
 	switch m["data"].(type) {
 	case map[string]interface{}:
 		d := m["data"].(map[string]interface{})
