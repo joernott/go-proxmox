@@ -12,8 +12,6 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
-
-	_ "github.com/bndr/gopencils"
 )
 
 type ProxMox struct {
