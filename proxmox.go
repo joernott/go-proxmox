@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type ProxMox struct {
@@ -48,13 +49,23 @@ func NewProxMox(HostName string, UserName string, Password string) (*ProxMox, er
 	proxmox.BaseURL = "https://" + proxmox.Hostname + ":8006/api2/json/"
 
 	if proxmox.VerifySSL {
-		tr = &http.Transport{}
+		tr = &http.Transport{
+			DisableKeepAlives:   false,
+			IdleConnTimeout:     0,
+			MaxIdleConns:        200,
+			MaxIdleConnsPerHost: 100}
 	} else {
 		tr = &http.Transport{
-			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			DisableKeepAlives:   false,
+			IdleConnTimeout:     0,
+			MaxIdleConns:        200,
+			MaxIdleConnsPerHost: 100,
+			TLSClientConfig:     &tls.Config{InsecureSkipVerify: true},
 		}
 	}
-	proxmox.client = &http.Client{Transport: tr}
+	proxmox.client = &http.Client{
+		Transport: tr,
+		Timeout:   time.Second * 10}
 	form = url.Values{
 		"username": {proxmox.Username},
 		"password": {proxmox.password},
@@ -309,7 +320,6 @@ func (proxmox ProxMox) PostForm(endpoint string, form url.Values) (map[string]in
 		req.Header.Add("CSRFPreventionToken", proxmox.connectionCSRFPreventionToken)
 	}
 	r, err := proxmox.client.Do(req)
-	defer r.Body.Close()
 	if err != nil {
 		fmt.Println("Error while posting")
 		fmt.Println(err)
@@ -323,6 +333,7 @@ func (proxmox ProxMox) PostForm(endpoint string, form url.Values) (map[string]in
 	}
 
 	response, err := ioutil.ReadAll(r.Body)
+	r.Body.Close()
 	if err != nil {
 		fmt.Println("Error while reading body")
 		fmt.Println(err)
@@ -361,7 +372,6 @@ func (proxmox ProxMox) Post(endpoint string, input string) (map[string]interface
 		req.Header.Add("CSRFPreventionToken", proxmox.connectionCSRFPreventionToken)
 	}
 	r, err := proxmox.client.Do(req)
-	defer r.Body.Close()
 	if err != nil {
 		fmt.Println("Error while posting")
 		fmt.Println(err)
@@ -375,6 +385,7 @@ func (proxmox ProxMox) Post(endpoint string, input string) (map[string]interface
 	}
 
 	response, err := ioutil.ReadAll(r.Body)
+	r.Body.Close()
 	if err != nil {
 		fmt.Println("Error while reading body")
 		fmt.Println(err)
@@ -398,11 +409,11 @@ func (proxmox ProxMox) Post(endpoint string, input string) (map[string]interface
 func (proxmox ProxMox) GetRaw(endpoint string) ([]byte, error) {
 	target := proxmox.BaseURL + endpoint
 	r, err := proxmox.client.Get(target)
-	defer r.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 	response, err := ioutil.ReadAll(r.Body)
+	r.Body.Close()
 	if err != nil {
 		return nil, err
 	}
@@ -420,11 +431,11 @@ func (proxmox ProxMox) Get(endpoint string) (map[string]interface{}, error) {
 	//target = "http://requestb.in/1ls8s9d1"
 	//fmt.Println("GET " + target)
 	r, err := proxmox.client.Get(target)
-	defer r.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 	response, err := ioutil.ReadAll(r.Body)
+	r.Body.Close()
 	if err != nil {
 		return nil, err
 	}
@@ -446,11 +457,11 @@ func (proxmox ProxMox) GetBytes(endpoint string) ([]byte, error) {
 	//target = "http://requestb.in/1ls8s9d1"
 	//fmt.Println("GET " + target)
 	r, err := proxmox.client.Get(target)
-	defer r.Body.Close()
 	if err != nil {
 		return nil, err
 	}
 	response, err := ioutil.ReadAll(r.Body)
+	r.Body.Close()
 	if err != nil {
 		return nil, err
 	}
@@ -473,7 +484,6 @@ func (proxmox ProxMox) Delete(endpoint string) (map[string]interface{}, error) {
 	req.Header.Add("CSRFPreventionToken", proxmox.connectionCSRFPreventionToken)
 
 	r, err := proxmox.client.Do(req)
-	defer r.Body.Close()
 	if err != nil {
 		fmt.Println("Error while deleting")
 		fmt.Println(err)
@@ -487,6 +497,7 @@ func (proxmox ProxMox) Delete(endpoint string) (map[string]interface{}, error) {
 	}
 
 	response, err := ioutil.ReadAll(r.Body)
+	r.Body.Close()
 	if err != nil {
 		fmt.Println("Error while reading body")
 		fmt.Println(err)
