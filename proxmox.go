@@ -149,39 +149,14 @@ func (proxmox ProxMox) Nodes() (NodeList, error) {
 	return list, nil
 }
 
-func (proxmox ProxMox) maxVMId() (float64, error) {
-	var id float64
-	var maxId float64
-	var err error
-	var nodes NodeList
-	var node Node
-
-	//fmt.Println("!maxVMId")
-	maxId = 0
-
-	nodes, err = proxmox.Nodes()
+func (proxmox ProxMox) NextVMId() (string, error) {
+	data, err := proxmox.Get("cluster/nextid")
 	if err != nil {
-		return 0, err
-	}
-	for _, node = range nodes {
-		id, err = node.MaxQemuId()
-		if err != nil {
-			return 0, err
-		}
-		if id > maxId {
-			maxId = id
-		}
-	}
-	return maxId, err
-}
-
-func (proxmox ProxMox) NextVMId() (float64, error) {
-	max, err := proxmox.maxVMId()
-	if err != nil {
-		return max, err
+		return "", err
 	}
 
-	return max + 1, nil
+	result := data["data"].(string)
+	return result, nil
 }
 
 func (proxmox ProxMox) DetermineVMPlacement(cpu int64, cores int64, mem int64, overCommitCPU float64, overCommitMem float64) (Node, error) {

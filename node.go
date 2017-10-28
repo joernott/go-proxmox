@@ -145,11 +145,10 @@ func (node Node) CreateQemuVM(Name string, Sockets int, Cores int, MemorySize in
 
 	//fmt.Println("!CreateQemuVM")
 
-	i, err := node.Proxmox.maxVMId()
+	newVmId, err = node.Proxmox.NextVMId()
 	if err != nil {
 		return "", err
 	}
-	newVmId = strconv.FormatFloat(i+1, 'f', 0, 64)
 	//fmt.Println("new VM ID: " + newVmId)
 	storageList, err = node.Storages()
 	results, err = storageList["local"].CreateVolume("vm-"+newVmId+"-disk-0.qcow2", DiskSize, newVmId)
