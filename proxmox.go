@@ -41,12 +41,16 @@ func NewProxMox(HostName string, UserName string, Password string) (*ProxMox, er
 		UserName = UserName + "@pam"
 	}
 
+	if !strings.HasPrefix(HostName, "http") && !strings.HasPrefix(HostName, "https") {
+		HostName = "https://" + HostName
+	}
+
 	proxmox = new(ProxMox)
 	proxmox.Hostname = HostName
 	proxmox.Username = UserName
 	proxmox.password = Password
 	proxmox.VerifySSL = false
-	proxmox.BaseURL = "https://" + proxmox.Hostname + ":8006/api2/json/"
+	proxmox.BaseURL = proxmox.Hostname + ":8006/api2/json/"
 
 	if proxmox.VerifySSL {
 		tr = &http.Transport{
