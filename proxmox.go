@@ -103,22 +103,19 @@ func NewProxMox(HostName string, UserName string, Password string) (*ProxMox, er
 		}
 		proxmox.client.Jar.SetCookies(cookieURL, cookies)
 
-		domain = "requestb.in"
 		cookie = &http.Cookie{
-			Name:   "PVEAuthCookie",
-			Value:  data["ticket"].(string),
-			Path:   "/",
-			Domain: domain,
+			Name:  "PVEAuthCookie",
+			Value: data["ticket"].(string),
+			Path:  "/",
 		}
 		testcookies = append(testcookies, cookie)
 		cookie = &http.Cookie{
-			Name:   "CSRFPreventionToken",
-			Value:  data["CSRFPreventionToken"].(string),
-			Path:   "/",
-			Domain: domain,
+			Name:  "CSRFPreventionToken",
+			Value: data["CSRFPreventionToken"].(string),
+			Path:  "/",
 		}
 		testcookies = append(testcookies, cookie)
-		cookieURL, err = url.Parse("https://" + domain + "/")
+		cookieURL, err = url.Parse(proxmox.Hostname + "/")
 		if err != nil {
 			return nil, err
 		}
