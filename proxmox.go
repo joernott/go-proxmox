@@ -23,7 +23,7 @@ type ProxMox struct {
 	BaseURL                       string
 	connectionCSRFPreventionToken string
 	ConnectionTicket              string
-	client                        *http.Client
+	Client                        *http.Client
 }
 
 func NewProxMox(HostName string, UserName string, Password string) (*ProxMox, error) {
@@ -32,7 +32,6 @@ func NewProxMox(HostName string, UserName string, Password string) (*ProxMox, er
 	var data map[string]interface{}
 	var form url.Values
 	var cookies []*http.Cookie
-	var testcookies []*http.Cookie
 	var tr *http.Transport
 	var domain string
 	//fmt.Println("!NewProxMox")
@@ -67,7 +66,7 @@ func NewProxMox(HostName string, UserName string, Password string) (*ProxMox, er
 			TLSClientConfig:     &tls.Config{InsecureSkipVerify: true},
 		}
 	}
-	proxmox.client = &http.Client{
+	proxmox.Client = &http.Client{
 		Transport: tr,
 		Timeout:   time.Second * 10}
 	form = url.Values{
@@ -79,47 +78,20 @@ func NewProxMox(HostName string, UserName string, Password string) (*ProxMox, er
 	if err != nil {
 		return nil, err
 	} else {
-		proxmox.connectionCSRFPreventionToken = data["CSRFPreventionToken"].(string)
 		proxmox.ConnectionTicket = data["ticket"].(string)
-		proxmox.client.Jar, err = cookiejar.New(nil)
+		proxmox.Client.Jar, err = cookiejar.New(nil)
 		domain = proxmox.Hostname
 		cookie := &http.Cookie{
-			Name:   "PVEAuthCookie",
-			Value:  data["ticket"].(string),
-			Path:   "/",
-			Domain: domain,
-		}
-		cookies = append(cookies, cookie)
-		cookie = &http.Cookie{
-			Name:   "CSRFPreventionToken",
-			Value:  data["CSRFPreventionToken"].(string),
-			Path:   "/",
-			Domain: domain,
-		}
-		cookies = append(cookies, cookie)
-		cookieURL, err := url.Parse("https://" + domain + "/")
-		if err != nil {
-			return nil, err
-		}
-		proxmox.client.Jar.SetCookies(cookieURL, cookies)
-
-		cookie = &http.Cookie{
 			Name:  "PVEAuthCookie",
 			Value: data["ticket"].(string),
 			Path:  "/",
 		}
-		testcookies = append(testcookies, cookie)
-		cookie = &http.Cookie{
-			Name:  "CSRFPreventionToken",
-			Value: data["CSRFPreventionToken"].(string),
-			Path:  "/",
-		}
-		testcookies = append(testcookies, cookie)
-		cookieURL, err = url.Parse(proxmox.Hostname + "/")
+		cookies = append(cookies, cookie)
+		cookieURL, err := url.Parse(domain + "/")
 		if err != nil {
 			return nil, err
 		}
-		proxmox.client.Jar.SetCookies(cookieURL, testcookies)
+		proxmox.Client.Jar.SetCookies(cookieURL, cookies)
 
 		return proxmox, nil
 	}
@@ -320,7 +292,7 @@ func (proxmox ProxMox) PostForm(endpoint string, form url.Values) (map[string]in
 	if proxmox.connectionCSRFPreventionToken != "" {
 		req.Header.Add("CSRFPreventionToken", proxmox.connectionCSRFPreventionToken)
 	}
-	r, err := proxmox.client.Do(req)
+	r, err := proxmox.Client.Do(req)
 	if err != nil {
 		fmt.Println("Error while posting")
 		fmt.Println(err)
@@ -372,7 +344,7 @@ func (proxmox ProxMox) Post(endpoint string, input string) (map[string]interface
 	if proxmox.connectionCSRFPreventionToken != "" {
 		req.Header.Add("CSRFPreventionToken", proxmox.connectionCSRFPreventionToken)
 	}
-	r, err := proxmox.client.Do(req)
+	r, err := proxmox.Client.Do(req)
 	if err != nil {
 		fmt.Println("Error while posting")
 		fmt.Println(err)
@@ -409,7 +381,7 @@ func (proxmox ProxMox) Post(endpoint string, input string) (map[string]interface
 
 func (proxmox ProxMox) GetRaw(endpoint string) ([]byte, error) {
 	target := proxmox.BaseURL + endpoint
-	r, err := proxmox.client.Get(target)
+	r, err := proxmox.Client.Get(target)
 	if err != nil {
 		return nil, err
 	}
@@ -431,7 +403,7 @@ func (proxmox ProxMox) Get(endpoint string) (map[string]interface{}, error) {
 	target = proxmox.BaseURL + endpoint
 	//target = "http://requestb.in/1ls8s9d1"
 	//fmt.Println("GET " + target)
-	r, err := proxmox.client.Get(target)
+	r, err := proxmox.Client.Get(target)
 	if err != nil {
 		return nil, err
 	}
@@ -457,7 +429,7 @@ func (proxmox ProxMox) GetBytes(endpoint string) ([]byte, error) {
 	target = proxmox.BaseURL + endpoint
 	//target = "http://requestb.in/1ls8s9d1"
 	//fmt.Println("GET " + target)
-	r, err := proxmox.client.Get(target)
+	r, err := proxmox.Client.Get(target)
 	if err != nil {
 		return nil, err
 	}
@@ -484,7 +456,7 @@ func (proxmox ProxMox) Delete(endpoint string) (map[string]interface{}, error) {
 
 	req.Header.Add("CSRFPreventionToken", proxmox.connectionCSRFPreventionToken)
 
-	r, err := proxmox.client.Do(req)
+	r, err := proxmox.Client.Do(req)
 	if err != nil {
 		fmt.Println("Error while deleting")
 		fmt.Println(err)
