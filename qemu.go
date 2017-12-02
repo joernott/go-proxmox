@@ -241,7 +241,7 @@ func (qemu QemuVM) Resume() error {
 	return err
 }
 
-func (qemu QemuVM) Clone(newId float64, name string, targetName string) (string, error) {
+func (qemu QemuVM) Clone(newId float64, name string, targetName string) (Task, error) {
 	var target string
 	var err error
 
@@ -258,10 +258,13 @@ func (qemu QemuVM) Clone(newId float64, name string, targetName string) (string,
 
 	data, err := qemu.Node.Proxmox.PostForm(target, form)
 	if err != err {
-		return "", err
+		return Task{}, err
 	}
 
-	UPid := data["data"].(string)
+	t := Task{
+		UPid:    data["data"].(string),
+		proxmox: qemu.Node.Proxmox,
+	}
 
-	return UPid, nil
+	return t, nil
 }
