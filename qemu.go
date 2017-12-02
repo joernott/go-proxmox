@@ -253,6 +253,7 @@ func (qemu QemuVM) Clone(newId float64, name string, targetName string) (string,
 		"newid":  {newVMID},
 		"name":   {name},
 		"target": {targetName},
+		"full":   {"1"},
 	}
 
 	data, err := qemu.Node.Proxmox.PostForm(target, form)
