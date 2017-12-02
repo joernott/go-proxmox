@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
@@ -190,7 +191,7 @@ func (proxmox ProxMox) NextVMId() (float64, error) {
 func (proxmox ProxMox) DetermineVMPlacement(cpu int64, cores int64, mem int64, overCommitCPU float64, overCommitMem float64) (Node, error) {
 	var nodeList NodeList
 	var node Node
-	var qemuList QemuList
+	var qemuList []QemuVM
 	var qemu QemuVM
 	var errNode Node
 	var usedCPUs int64
@@ -203,9 +204,17 @@ func (proxmox ProxMox) DetermineVMPlacement(cpu int64, cores int64, mem int64, o
 		return errNode, errors.New("Could not get any nodes.")
 	}
 	for _, node = range nodeList {
-		qemuList, err = node.Qemu()
+		qemuListSorted, err := node.Qemu()
 		if err != nil {
 			return errNode, errors.New("Could not get VMs for node " + node.Node + ".")
+		}
+		//Randomize order of nodes
+		qemuList = make([]QemuVM, len(qemuListSorted))
+		perm := rand.Perm(len(qemuListSorted))
+		i := 0
+		for s := range qemuListSorted {
+			qemuList[perm[i]] = qemuListSorted[s]
+			i++
 		}
 		for _, qemu = range qemuList {
 			usedCPUs = usedCPUs + int64(qemu.CPUs)
