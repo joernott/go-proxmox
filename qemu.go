@@ -112,6 +112,7 @@ func (qemu QemuVM) Config() (QemuConfig, error) {
 		Memory:   results["memory"].(float64),
 		Sockets:  results["sockets"].(float64),
 		SMBios1:  results["smbios1"].(string),
+		Description:  results["description"].(string),
 	}
 	disktype := [3]string{"virtio", "sata", "ide"}
 	disknum := [4]string{"0", "1", "2", "3"}
