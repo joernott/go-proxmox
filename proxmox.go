@@ -134,20 +134,25 @@ func (proxmox ProxMox) Nodes() (NodeList, error) {
 	results = data["data"].([]interface{})
 	for _, v0 := range results {
 		v := v0.(map[string]interface{})
-		node = Node{
-			Mem:      v["mem"].(float64),
-			MaxDisk:  v["maxdisk"].(float64),
-			Node:     v["node"].(string),
-			MaxCPU:   v["maxcpu"].(float64),
-			Uptime:   v["uptime"].(float64),
-			Id:       v["id"].(string),
-			CPU:      v["cpu"].(float64),
-			Level:    v["level"].(string),
-			NodeType: v["type"].(string),
-			Disk:     v["disk"].(float64),
-			MaxMem:   v["maxmem"].(float64),
-			Proxmox:  proxmox,
-		}
+		Block{
+			Try: func() {
+				node = Node{
+					Mem:      v["mem"].(float64),
+					MaxDisk:  v["maxdisk"].(float64),
+					Node:     v["node"].(string),
+					MaxCPU:   v["maxcpu"].(float64),
+					Uptime:   v["uptime"].(float64),
+					Id:       v["id"].(string),
+					CPU:      v["cpu"].(float64),
+					Level:    v["level"].(string),
+					NodeType: v["type"].(string),
+					Disk:     v["disk"].(float64),
+					MaxMem:   v["maxmem"].(float64),
+					Proxmox:  proxmox,
+				}
+			},
+			Catch: func(e Exception){},
+		}.Do()
 		list[node.Node] = node
 	}
 	return list, nil
