@@ -35,14 +35,15 @@ type QemuList map[string]QemuVM
 type QemuNet map[string]string
 
 type QemuConfig struct {
-	Bootdisk string  `json:"bootdisk"`
-	Cores    float64 `json:"cores"`
-	Digest   string  `json:"digest"`
-	Memory   float64 `json:"memory"`
-	Net      map[string]QemuNet
-	SMBios1  string            `json:"smbios1"`
-	Sockets  float64           `json:"sockets"`
-	Disks    map[string]string `json:"disks"`
+	Bootdisk    string  `json:"bootdisk"`
+	Cores       float64 `json:"cores"`
+	Digest      string  `json:"digest"`
+	Memory      float64 `json:"memory"`
+	Net         map[string]QemuNet
+	SMBios1     string            `json:"smbios1"`
+	Sockets     float64           `json:"sockets"`
+	Disks       map[string]string `json:"disks"`
+	Description string `json:"description"`
 }
 
 type QemuStatus struct {
