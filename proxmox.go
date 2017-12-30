@@ -134,11 +134,10 @@ func (proxmox ProxMox) Nodes() (NodeList, error) {
 	results = data["data"].([]interface{})
 	for _, v0 := range results {
 		v := v0.(map[string]interface{})
-		defer func() {
-			if r := recover(); r == nil {
-				list[node.Node] = node
-			}
-		}()
+		if val, ok := v["uptime"]; !ok || val == nil {
+			fmt.Println("Node probably down. Skipping.")
+			continue
+		}
 		node = Node{
 			Mem:      v["mem"].(float64),
 			MaxDisk:  v["maxdisk"].(float64),
@@ -153,6 +152,7 @@ func (proxmox ProxMox) Nodes() (NodeList, error) {
 			MaxMem:   v["maxmem"].(float64),
 			Proxmox:  proxmox,
 		}
+		list[node.Node] = node
 	}
 	return list, nil
 }
