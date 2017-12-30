@@ -135,8 +135,8 @@ func (proxmox ProxMox) Nodes() (NodeList, error) {
 	for _, v0 := range results {
 		v := v0.(map[string]interface{})
 		defer func() {
-			if r := recover(); r != nil {
-				continue
+			if r := recover(); r == nil {
+				list[node.Node] = node
 			}
 		}()
 		node = Node{
@@ -153,7 +153,6 @@ func (proxmox ProxMox) Nodes() (NodeList, error) {
 			MaxMem:   v["maxmem"].(float64),
 			Proxmox:  proxmox,
 		}
-		list[node.Node] = node
 	}
 	return list, nil
 }
