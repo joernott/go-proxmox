@@ -87,7 +87,7 @@ func (node Node) MaxQemuId() (float64, error) {
 
 	//fmt.Println("!MaxQemuId")
 
-	id = 0
+	id = 1009
 	list, err = node.Qemu()
 	if err != nil {
 		return 0, err
