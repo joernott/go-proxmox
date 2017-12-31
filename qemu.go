@@ -340,3 +340,22 @@ func (qemu QemuVM) SetIPSet(ip string) error {
 
 	return nil
 }
+
+func (qemu QemuVM) ResizeDisk(size string) error {
+	var target string
+	var err error
+
+	target = "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/resize"
+
+	form := url.Values{
+		"disk": {"scsi1"},
+		"size": {size + "G"},
+	}
+
+	_, err = qemu.Node.Proxmox.PutForm(target, form)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
