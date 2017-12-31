@@ -278,13 +278,13 @@ func (qemu QemuVM) SetIPSet(ip string) error {
 	target = "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/firewall/options"
 
 	form := url.Values{
-		"dhcp":          {"true"},
-		"enable":        {"true"},
+		"dhcp":          {"1"},
+		"enable":        {"1"},
 		"log_level_in":  {"nolog"},
 		"log_level_out": {"nolog"},
-		"macfilter":     {"true"},
-		"ipfilter":      {"true"},
-		"ndp":           {"true"},
+		"macfilter":     {"1"},
+		"ipfilter":      {"1"},
+		"ndp":           {"1"},
 		"policy_in":     {"ACCEPT"},
 		"policy_out":    {"ACCEPT"},
 	}
