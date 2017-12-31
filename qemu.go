@@ -43,7 +43,7 @@ type QemuConfig struct {
 	SMBios1     string            `json:"smbios1"`
 	Sockets     float64           `json:"sockets"`
 	Disks       map[string]string `json:"disks"`
-	Description string `json:"description"`
+	Description string            `json:"description"`
 }
 
 type QemuStatus struct {
@@ -106,13 +106,13 @@ func (qemu QemuVM) Config() (QemuConfig, error) {
 		return config, err
 	}
 	config = QemuConfig{
-		Bootdisk: results["bootdisk"].(string),
-		Cores:    results["cores"].(float64),
-		Digest:   results["digest"].(string),
-		Memory:   results["memory"].(float64),
-		Sockets:  results["sockets"].(float64),
-		SMBios1:  results["smbios1"].(string),
-		Description:  results["description"].(string),
+		Bootdisk:    results["bootdisk"].(string),
+		Cores:       results["cores"].(float64),
+		Digest:      results["digest"].(string),
+		Memory:      results["memory"].(float64),
+		Sockets:     results["sockets"].(float64),
+		SMBios1:     results["smbios1"].(string),
+		Description: results["description"].(string),
 	}
 	disktype := [3]string{"virtio", "sata", "ide"}
 	disknum := [4]string{"0", "1", "2", "3"}
@@ -269,4 +269,63 @@ func (qemu QemuVM) Clone(newId float64, name string, targetName string) (Task, e
 	}
 
 	return t, nil
+}
+
+func (qemu QemuVM) SetIPSet(ip string) error {
+	var target string
+	var err error
+
+	target = "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/firewall/options"
+
+	form := url.Values{
+		"dhcp":          {"1"},
+		"enable":        {"1"},
+		"log_level_in":  {"nolog"},
+		"log_level_out": {"nolog"},
+		"macfilter":     {"1"},
+		"ipfilter":      {"1"},
+		"ndp":           {"0"},
+		"policy_in":     {"ACCEPT"},
+		"policy_out":    {"ACCEPT"},
+	}
+
+	_, err = qemu.Node.Proxmox.PutForm(target, form)
+	if err != nil {
+		return err
+	}
+
+	target = "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/firewall/ipset"
+
+	form = url.Values{
+		"name": {"ipfilter-net0"},
+	}
+
+	_, err = qemu.Node.Proxmox.PostForm(target, form)
+	if err != nil {
+		return err
+	}
+
+	target = "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/firewall/ipset/ipfilter-net0"
+
+	form = url.Values{
+		"cidr": {ip},
+	}
+
+	_, err = qemu.Node.Proxmox.PostForm(target, form)
+	if err != nil {
+		return err
+	}
+
+	target = "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/config"
+
+	form = url.Values{
+		"firewall": {"1"},
+	}
+
+	_, err = qemu.Node.Proxmox.PutForm(target, form)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

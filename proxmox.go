@@ -444,6 +444,60 @@ func (proxmox ProxMox) Post(endpoint string, input string) (map[string]interface
 	return m, nil
 }
 
+func (proxmox ProxMox) PutForm(endpoint string, form url.Values) (map[string]interface{}, error) {
+	var target string
+	var data interface{}
+	var req *http.Request
+
+	//fmt.Println("!PutForm")
+
+	target = proxmox.BaseURL + endpoint
+
+	req, err := http.NewRequest("PUT", target, bytes.NewBufferString(form.Encode()))
+
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("Content-Length", strconv.Itoa(len(form.Encode())))
+	if proxmox.connectionCSRFPreventionToken != "" {
+		req.Header.Add("CSRFPreventionToken", proxmox.connectionCSRFPreventionToken)
+	}
+	r, err := proxmox.client.Do(req)
+	defer r.Body.Close()
+	if err != nil {
+		fmt.Println("Error while puting")
+		fmt.Println(err)
+		return nil, err
+	}
+	//fmt.Print("HTTP status ")
+	//fmt.Println(r.StatusCode)
+	if r.StatusCode != 200 {
+		//spew.Dump(r)
+		return nil, errors.New("HTTP Error " + r.Status)
+		//	} else {
+		//		spew.Dump(r)
+	}
+
+	response, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		fmt.Println("Error while reading body")
+		fmt.Println(err)
+		return nil, err
+	}
+	err = json.Unmarshal(response, &data)
+	if err != nil {
+		fmt.Println("Error while processing JSON")
+		fmt.Println(err)
+		return nil, err
+	}
+	m := data.(map[string]interface{})
+	//spew.Dump(m)
+	switch m["data"].(type) {
+	case map[string]interface{}:
+		d := m["data"].(map[string]interface{})
+		return d, nil
+	}
+	return m, nil
+}
+
 func (proxmox ProxMox) Get(endpoint string) (map[string]interface{}, error) {
 	var target string
 	var data interface{}
