@@ -94,7 +94,7 @@ func (node Node) MaxQemuId() (float64, error) {
 	}
 
 	for _, vm = range list {
-		if vm.VMId > id && vm.VMId >= 1000 && vm.VMId < 2000 {
+		if vm.VMId > id && vm.VMId >= 1010 && vm.VMId < 2000 {
 			id = vm.VMId
 		}
 	}
