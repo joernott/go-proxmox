@@ -316,10 +316,21 @@ func (qemu QemuVM) SetIPSet(ip string) error {
 		return err
 	}
 
+	config, err := qemu.Config()
+	if err != nil {
+		return err
+	}
+
 	target = "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/config"
 
+	net := ""
+
+	for k, v := range config.Net["net0"] {
+		net += k + "=" + v + ","
+	}
+
 	form = url.Values{
-		"firewall": {"1"},
+		"net0": {net + ",firewall=1"},
 	}
 
 	_, err = qemu.Node.Proxmox.PutForm(target, form)
