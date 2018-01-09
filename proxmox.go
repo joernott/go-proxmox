@@ -49,7 +49,10 @@ func NewProxMox(HostName string, UserName string, Password string) (*ProxMox, er
 	proxmox.Username = UserName
 	proxmox.password = Password
 	proxmox.VerifySSL = false
-	proxmox.BaseURL = proxmox.Hostname + ":8006/api2/json/"
+	if len(strings.Split(proxmox.Hostname, ":")) == 1 {
+		proxmox.BaseURL = proxmox.Hostname + ":8006"
+	}
+	proxmox.BaseURL = proxmox.Hostname + "/api2/json/"
 
 	if proxmox.VerifySSL {
 		tr = &http.Transport{
