@@ -210,15 +210,25 @@ func (qemu QemuVM) Stop() error {
 	return err
 }
 
-func (qemu QemuVM) Shutdown() error {
+func (qemu QemuVM) Shutdown() (Task, error) {
 	var target string
 	var err error
 
 	//fmt.Print("!QemuShutdown ", qemu.VMId)
 
 	target = "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/status/shutdown"
-	_, err = qemu.Node.Proxmox.Post(target, "")
-	return err
+	data, err = qemu.Node.Proxmox.Post(target, "")
+	
+	if err != err {
+		return Task{}, err
+	}
+
+	t := Task{
+		UPid:    data["data"].(string),
+		proxmox: qemu.Node.Proxmox,
+	}
+	
+	return t, err
 }
 
 func (qemu QemuVM) Suspend() error {
