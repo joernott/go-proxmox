@@ -217,7 +217,7 @@ func (qemu QemuVM) Shutdown() (Task, error) {
 	//fmt.Print("!QemuShutdown ", qemu.VMId)
 
 	target = "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/status/shutdown"
-	data, err = qemu.Node.Proxmox.Post(target, "")
+	data, err := qemu.Node.Proxmox.Post(target, "")
 	
 	if err != err {
 		return Task{}, err
