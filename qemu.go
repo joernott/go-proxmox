@@ -291,7 +291,7 @@ func (qemu QemuVM) SetDescription(description string) (error) {
 		"description":  {description},
 	}
 
-	_, err := qemu.Node.Proxmox.PutForm(target, form)
+	_, err = qemu.Node.Proxmox.PutForm(target, form)
 	if err != err {
 		return err
 	}
