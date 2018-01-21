@@ -299,7 +299,7 @@ func (qemu QemuVM) SetDescription(description string) (error) {
 	return nil
 }
 
-func (qemu QemuVM) SetMemory(memory int) (error) {
+func (qemu QemuVM) SetMemory(memory string) (error) {
 	var target string
 	var err error
 
