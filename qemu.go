@@ -299,6 +299,24 @@ func (qemu QemuVM) SetDescription(description string) (error) {
 	return nil
 }
 
+func (qemu QemuVM) SetMemory(memory int) (error) {
+	var target string
+	var err error
+
+	target = "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/config"
+
+	form := url.Values{
+		"memory":  {memory},
+	}
+
+	_, err = qemu.Node.Proxmox.PutForm(target, form)
+	if err != err {
+		return err
+	}
+
+	return nil
+}
+
 func (qemu QemuVM) SetIPSet(ip string) error {
 	var target string
 	var err error
