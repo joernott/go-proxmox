@@ -106,11 +106,22 @@ func (qemu QemuVM) Config() (QemuConfig, error) {
 	}
 	config = QemuConfig{
 		Bootdisk: results["bootdisk"].(string),
-		Cores:    results["cores"].(float64),
 		Digest:   results["digest"].(string),
 		Memory:   results["memory"].(float64),
-		Sockets:  results["sockets"].(float64),
 		SMBios1:  results["smbios1"].(string),
+	}
+
+	switch results["cores"].(type) {
+	default:
+		config.Cores = 1
+	case float64:
+		config.Cores = results["cores"].(float64)
+	}
+	switch results["sockets"].(type) {
+	default:
+		config.Sockets = 1
+	case float64:
+		config.Sockets = results["sockets"].(float64)
 	}
 	disktype := [3]string{"virtio", "sata", "ide"}
 	disknum := [4]string{"0", "1", "2", "3"}
@@ -197,15 +208,21 @@ func (qemu QemuVM) Start() error {
 	return err
 }
 
-func (qemu QemuVM) Stop() error {
+func (qemu QemuVM) Stop() (string, error) {
 	var target string
 	var err error
 
 	//fmt.Print("!QemuStop ", qemu.VMId)
 
 	target = "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/status/stop"
-	_, err = qemu.Node.Proxmox.Post(target, "")
-	return err
+	data, err := qemu.Node.Proxmox.Post(target, "")
+	if err != nil {
+		return "", err
+	}
+
+	UPid := data["data"].(string)
+
+	return UPid, nil
 }
 
 func (qemu QemuVM) Shutdown() error {
@@ -242,6 +259,10 @@ func (qemu QemuVM) Resume() error {
 }
 
 func (qemu QemuVM) Clone(newId float64, name string, targetName string) (string, error) {
+	return qemu.CloneToPool(newId, name, targetName, "")
+}
+
+func (qemu QemuVM) CloneToPool(newId float64, name string, targetName string, pool string) (string, error) {
 	var target string
 	var err error
 
@@ -255,8 +276,48 @@ func (qemu QemuVM) Clone(newId float64, name string, targetName string) (string,
 		"target": {targetName},
 	}
 
+	if pool != "" {
+		form.Add("pool", pool)
+	}
+
 	data, err := qemu.Node.Proxmox.PostForm(target, form)
 	if err != err {
+		return "", err
+	}
+
+	UPid := data["data"].(string)
+
+	return UPid, nil
+}
+
+func (qemu QemuVM) Snapshot(name string, includeRAM bool) (string, error) {
+	target := "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/snapshot"
+
+	vmstate := "0"
+	if includeRAM == true {
+		vmstate = "1"
+	}
+
+	form := url.Values{
+		"snapname": {name},
+		"vmstate":  {vmstate},
+	}
+
+	data, err := qemu.Node.Proxmox.PostForm(target, form)
+	if err != nil {
+		return "", err
+	}
+
+	UPid := data["data"].(string)
+
+	return UPid, nil
+}
+
+func (qemu QemuVM) Rollback(name string) (string, error) {
+	target := "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/snapshot/" + name + "/rollback"
+
+	data, err := qemu.Node.Proxmox.Post(target, "")
+	if err != nil {
 		return "", err
 	}
 
