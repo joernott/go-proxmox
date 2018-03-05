@@ -87,14 +87,14 @@ func (node Node) MaxQemuId() (float64, error) {
 
 	//fmt.Println("!MaxQemuId")
 
-	id = 0
+	id = 1009
 	list, err = node.Qemu()
 	if err != nil {
 		return 0, err
 	}
 
 	for _, vm = range list {
-		if vm.VMId > id {
+		if vm.VMId > id && vm.VMId >= 1010 && vm.VMId < 2000 {
 			id = vm.VMId
 		}
 	}

@@ -35,14 +35,15 @@ type QemuList map[string]QemuVM
 type QemuNet map[string]string
 
 type QemuConfig struct {
-	Bootdisk string  `json:"bootdisk"`
-	Cores    float64 `json:"cores"`
-	Digest   string  `json:"digest"`
-	Memory   float64 `json:"memory"`
-	Net      map[string]QemuNet
-	SMBios1  string            `json:"smbios1"`
-	Sockets  float64           `json:"sockets"`
-	Disks    map[string]string `json:"disks"`
+	Bootdisk    string  `json:"bootdisk"`
+	Cores       float64 `json:"cores"`
+	Digest      string  `json:"digest"`
+	Memory      float64 `json:"memory"`
+	Net         map[string]QemuNet
+	SMBios1     string            `json:"smbios1"`
+	Sockets     float64           `json:"sockets"`
+	Disks       map[string]string `json:"disks"`
+	Description string            `json:"description"`
 }
 
 type QemuStatus struct {
@@ -105,10 +106,13 @@ func (qemu QemuVM) Config() (QemuConfig, error) {
 		return config, err
 	}
 	config = QemuConfig{
-		Bootdisk: results["bootdisk"].(string),
-		Digest:   results["digest"].(string),
-		Memory:   results["memory"].(float64),
-		SMBios1:  results["smbios1"].(string),
+		Bootdisk:    results["bootdisk"].(string),
+		Cores:       results["cores"].(float64),
+		Digest:      results["digest"].(string),
+		Memory:      results["memory"].(float64),
+		Sockets:     results["sockets"].(float64),
+		SMBios1:     results["smbios1"].(string),
+		Description: results["description"].(string),
 	}
 
 	switch results["cores"].(type) {
@@ -225,15 +229,25 @@ func (qemu QemuVM) Stop() (string, error) {
 	return UPid, nil
 }
 
-func (qemu QemuVM) Shutdown() error {
+func (qemu QemuVM) Shutdown() (Task, error) {
 	var target string
 	var err error
 
 	//fmt.Print("!QemuShutdown ", qemu.VMId)
 
 	target = "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/status/shutdown"
-	_, err = qemu.Node.Proxmox.Post(target, "")
-	return err
+	data, err := qemu.Node.Proxmox.Post(target, "")
+	
+	if err != err {
+		return Task{}, err
+	}
+
+	t := Task{
+		UPid:    data["data"].(string),
+		proxmox: qemu.Node.Proxmox,
+	}
+	
+	return t, err
 }
 
 func (qemu QemuVM) Suspend() error {
@@ -274,6 +288,7 @@ func (qemu QemuVM) CloneToPool(newId float64, name string, targetName string, po
 		"newid":  {newVMID},
 		"name":   {name},
 		"target": {targetName},
+		"full":   {"1"},
 	}
 
 	if pool != "" {
@@ -282,12 +297,140 @@ func (qemu QemuVM) CloneToPool(newId float64, name string, targetName string, po
 
 	data, err := qemu.Node.Proxmox.PostForm(target, form)
 	if err != err {
-		return "", err
+		return Task{}, err
 	}
 
-	UPid := data["data"].(string)
+	t := Task{
+		UPid:    data["data"].(string),
+		proxmox: qemu.Node.Proxmox,
+	}
 
-	return UPid, nil
+	return t, nil
+}
+
+func (qemu QemuVM) SetDescription(description string) (error) {
+	var target string
+	var err error
+
+	target = "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/config"
+
+	form := url.Values{
+		"description":  {description},
+	}
+
+	_, err = qemu.Node.Proxmox.PutForm(target, form)
+	if err != err {
+		return err
+	}
+
+	return nil
+}
+
+func (qemu QemuVM) SetMemory(memory string) (error) {
+	var target string
+	var err error
+
+	target = "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/config"
+
+	form := url.Values{
+		"memory":  {memory},
+	}
+
+	_, err = qemu.Node.Proxmox.PutForm(target, form)
+	if err != err {
+		return err
+	}
+
+	return nil
+}
+
+func (qemu QemuVM) SetIPSet(ip string) error {
+	var target string
+	var err error
+
+	target = "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/firewall/options"
+
+	form := url.Values{
+		"dhcp":          {"1"},
+		"enable":        {"1"},
+		"log_level_in":  {"nolog"},
+		"log_level_out": {"nolog"},
+		"macfilter":     {"1"},
+		"ipfilter":      {"1"},
+		"ndp":           {"1"},
+		"policy_in":     {"ACCEPT"},
+		"policy_out":    {"ACCEPT"},
+	}
+
+	_, err = qemu.Node.Proxmox.PutForm(target, form)
+	if err != nil {
+		return err
+	}
+
+	target = "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/firewall/ipset"
+
+	form = url.Values{
+		"name": {"ipfilter-net0"},
+	}
+
+	_, err = qemu.Node.Proxmox.PostForm(target, form)
+	if err != nil {
+		return err
+	}
+
+	target = "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/firewall/ipset/ipfilter-net0"
+
+	form = url.Values{
+		"cidr": {ip},
+	}
+
+	_, err = qemu.Node.Proxmox.PostForm(target, form)
+	if err != nil {
+		return err
+	}
+
+	config, err := qemu.Config()
+	if err != nil {
+		return err
+	}
+
+	target = "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/config"
+
+	net := ""
+
+	for k, v := range config.Net["net0"] {
+		net += k + "=" + v + ","
+	}
+
+	form = url.Values{
+		"net0": {net + ",firewall=1"},
+	}
+
+	_, err = qemu.Node.Proxmox.PutForm(target, form)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (qemu QemuVM) ResizeDisk(size string) error {
+	var target string
+	var err error
+
+	target = "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/resize"
+
+	form := url.Values{
+		"disk": {"scsi1"},
+		"size": {size + "G"},
+	}
+
+	_, err = qemu.Node.Proxmox.PutForm(target, form)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (qemu QemuVM) Snapshot(name string, includeRAM bool) (string, error) {

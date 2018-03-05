@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"net/http/cookiejar"
 	"net/url"
@@ -133,6 +134,10 @@ func (proxmox ProxMox) Nodes() (NodeList, error) {
 	results = data["data"].([]interface{})
 	for _, v0 := range results {
 		v := v0.(map[string]interface{})
+		if val, ok := v["uptime"]; !ok || val == nil {
+			fmt.Println("Node probably down. Skipping.")
+			continue
+		}
 		node = Node{
 			Mem:      v["mem"].(float64),
 			MaxDisk:  v["maxdisk"].(float64),
@@ -190,7 +195,7 @@ func (proxmox ProxMox) NextVMId() (float64, error) {
 func (proxmox ProxMox) DetermineVMPlacement(cpu int64, cores int64, mem int64, overCommitCPU float64, overCommitMem float64) (Node, error) {
 	var nodeList NodeList
 	var node Node
-	var qemuList QemuList
+	var qemuList []QemuVM
 	var qemu QemuVM
 	var errNode Node
 	var usedCPUs int64
@@ -203,9 +208,17 @@ func (proxmox ProxMox) DetermineVMPlacement(cpu int64, cores int64, mem int64, o
 		return errNode, errors.New("Could not get any nodes.")
 	}
 	for _, node = range nodeList {
-		qemuList, err = node.Qemu()
+		qemuListSorted, err := node.Qemu()
 		if err != nil {
 			return errNode, errors.New("Could not get VMs for node " + node.Node + ".")
+		}
+		//Randomize order of nodes
+		qemuList = make([]QemuVM, len(qemuListSorted))
+		perm := rand.Perm(len(qemuListSorted))
+		i := 0
+		for s := range qemuListSorted {
+			qemuList[perm[i]] = qemuListSorted[s]
+			i++
 		}
 		for _, qemu = range qemuList {
 			usedCPUs = usedCPUs + int64(qemu.CPUs)
@@ -397,6 +410,60 @@ func (proxmox ProxMox) Post(endpoint string, input string) (map[string]interface
 	defer r.Body.Close()
 	if err != nil {
 		fmt.Println("Error while posting")
+		fmt.Println(err)
+		return nil, err
+	}
+	//fmt.Print("HTTP status ")
+	//fmt.Println(r.StatusCode)
+	if r.StatusCode != 200 {
+		//spew.Dump(r)
+		return nil, errors.New("HTTP Error " + r.Status)
+		//	} else {
+		//		spew.Dump(r)
+	}
+
+	response, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		fmt.Println("Error while reading body")
+		fmt.Println(err)
+		return nil, err
+	}
+	err = json.Unmarshal(response, &data)
+	if err != nil {
+		fmt.Println("Error while processing JSON")
+		fmt.Println(err)
+		return nil, err
+	}
+	m := data.(map[string]interface{})
+	//spew.Dump(m)
+	switch m["data"].(type) {
+	case map[string]interface{}:
+		d := m["data"].(map[string]interface{})
+		return d, nil
+	}
+	return m, nil
+}
+
+func (proxmox ProxMox) PutForm(endpoint string, form url.Values) (map[string]interface{}, error) {
+	var target string
+	var data interface{}
+	var req *http.Request
+
+	//fmt.Println("!PutForm")
+
+	target = proxmox.BaseURL + endpoint
+
+	req, err := http.NewRequest("PUT", target, bytes.NewBufferString(form.Encode()))
+
+	req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Add("Content-Length", strconv.Itoa(len(form.Encode())))
+	if proxmox.connectionCSRFPreventionToken != "" {
+		req.Header.Add("CSRFPreventionToken", proxmox.connectionCSRFPreventionToken)
+	}
+	r, err := proxmox.client.Do(req)
+	defer r.Body.Close()
+	if err != nil {
+		fmt.Println("Error while puting")
 		fmt.Println(err)
 		return nil, err
 	}
