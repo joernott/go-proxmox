@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"net/url"
 	"strconv"
-
-	_ "github.com/davecgh/go-spew/spew"
 )
 
 type Node struct {
@@ -114,7 +112,6 @@ func (node Node) Storages() (StorageList, error) {
 	if err != nil {
 		return nil, err
 	}
-	//spew.Dump(data)
 	list = make(StorageList)
 	results = data["data"].([]interface{})
 	for _, v0 := range results {
@@ -148,11 +145,10 @@ func (node Node) CreateQemuVM(Name string, Sockets int, Cores int, MemorySize in
 
 	//fmt.Println("!CreateQemuVM")
 
-	i, err := node.Proxmox.maxVMId()
+	newVmId, err = node.Proxmox.NextVMId()
 	if err != nil {
 		return "", err
 	}
-	newVmId = strconv.FormatFloat(i+1, 'f', 0, 64)
 	//fmt.Println("new VM ID: " + newVmId)
 	storageList, err = node.Storages()
 	results, err = storageList["local"].CreateVolume("vm-"+newVmId+"-disk-0.qcow2", DiskSize, newVmId)
@@ -183,7 +179,6 @@ func (node Node) CreateQemuVM(Name string, Sockets int, Cores int, MemorySize in
 	}
 	//fmt.Println("VM " + newVmId + " created")
 
-	//spew.Dump(results)
 	return newVmId, err
 }
 
@@ -207,7 +202,6 @@ func (node Node) VZDump(VmId string, BWLimit int, Compress string, IONice int, L
 	}
 	target = "nodes/" + node.Node + "/vzdump"
 	results, err = node.Proxmox.PostForm(target, form)
-	//spew.Dump(results)
 	if err != nil {
 		fmt.Println("Error dumping VM!")
 		return "", err

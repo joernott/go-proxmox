@@ -5,8 +5,6 @@ import (
 	"errors"
 	"strings"
 	"time"
-
-	_ "github.com/davecgh/go-spew/spew"
 )
 
 type Task struct {

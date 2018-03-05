@@ -3,8 +3,6 @@ package proxmox
 import (
 	"fmt"
 	"net/url"
-
-	_ "github.com/davecgh/go-spew/spew"
 )
 
 type Storage struct {
