@@ -235,7 +235,7 @@ func (qemu QemuVM) Shutdown() (Task, error) {
 
 	target = "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/status/shutdown"
 	data, err := qemu.Node.Proxmox.Post(target, "")
-	
+
 	if err != err {
 		return Task{}, err
 	}
@@ -244,7 +244,7 @@ func (qemu QemuVM) Shutdown() (Task, error) {
 		UPid:    data["data"].(string),
 		proxmox: qemu.Node.Proxmox,
 	}
-	
+
 	return t, err
 }
 
@@ -270,11 +270,11 @@ func (qemu QemuVM) Resume() error {
 	return err
 }
 
-func (qemu QemuVM) Clone(newId float64, name string, targetName string) (string, error) {
+func (qemu QemuVM) Clone(newId float64, name string, targetName string) (Task, error) {
 	return qemu.CloneToPool(newId, name, targetName, "")
 }
 
-func (qemu QemuVM) CloneToPool(newId float64, name string, targetName string, pool string) (string, error) {
+func (qemu QemuVM) CloneToPool(newId float64, name string, targetName string, pool string) (Task, error) {
 	var target string
 	var err error
 
