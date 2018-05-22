@@ -83,8 +83,10 @@ func NewProxMox(HostName string, UserName string, Password string) (*ProxMox, er
 		return nil, err
 	} else {
 		proxmox.ConnectionTicket = data["ticket"].(string)
+    proxmox.connectionCSRFPreventionToken = data["CSRFPreventionToken"].(string)
 		proxmox.Client.Jar, err = cookiejar.New(nil)
 		domain = proxmox.Hostname
+
 		cookie := &http.Cookie{
 			Name:  "PVEAuthCookie",
 			Value: data["ticket"].(string),
@@ -290,6 +292,83 @@ func (proxmox ProxMox) Tasks() (TaskList, error) {
 	return list, nil
 }
 
+func (proxmox ProxMox) Pools() (PoolList, error) {
+  var err error
+	var target string
+	var data map[string]interface{}
+	var list PoolList
+	var pool Pool
+	var results []interface{}
+
+	//fmt.Println("!Tasks")
+	target = "pools"
+	data, err = proxmox.Get(target)
+	if err != nil {
+		return nil, err
+	}
+	list = make(PoolList)
+	results = data["data"].([]interface{})
+	for _, v0 := range results {
+		v := v0.(map[string]interface{})
+		pool = Pool{
+			Poolid:    v["poolid"].(string),
+			proxmox: proxmox,
+		}
+
+		list[pool.Poolid] = pool
+  }
+
+  return list, nil
+}
+
+func (proxmox ProxMox) NewPool(name string, comment string) (map[string]interface{}, error) {
+  poolForm := url.Values{}
+  poolForm.Set("poolid", name)
+  poolForm.Set("comment", comment)
+
+  result, err := proxmox.PostForm("pools", poolForm)
+  if err != nil {
+    fmt.Println("Error while posting form")
+    fmt.Println(err)
+    return result, err
+  }
+
+  fmt.Printf("Result: %s", result)
+
+  return result, nil
+}
+
+func (proxmox ProxMox) UpdatePool(name string, comment string) (map[string]interface{}, error) {
+  poolForm := url.Values{}
+  poolForm.Set("poolid", name)
+  poolForm.Set("comment", comment)
+
+  result, err := proxmox.PutForm("pools/" + name, poolForm)
+  if err != nil {
+    fmt.Println("Error while posting form")
+    fmt.Println(err)
+    return result, err
+  }
+
+  fmt.Printf("Result: %s", result)
+
+  return result, nil
+}
+
+func (proxmox ProxMox) DeletePool(name string) error {
+  result, err := proxmox.Delete(fmt.Sprintf("pools/%s", name))
+
+  if err != nil {
+    fmt.Printf("Error deleting pool: %s", name)
+    fmt.Println(err)
+    fmt.Printf("Result was: %s", result)
+  }
+
+  fmt.Printf("Created pool: %s\n", name)
+
+  return nil
+}
+
 func (proxmox ProxMox) PostForm(endpoint string, form url.Values) (map[string]interface{}, error) {
 	var target string
 	var data interface{}
@@ -308,6 +387,9 @@ func (proxmox ProxMox) PostForm(endpoint string, form url.Values) (map[string]in
 	if proxmox.connectionCSRFPreventionToken != "" {
 		req.Header.Add("CSRFPreventionToken", proxmox.connectionCSRFPreventionToken)
 	}
+
+  fmt.Printf("Posting form values: %s\n", req)
+
 	r, err := proxmox.Client.Do(req)
 	if err != nil {
 		fmt.Println("Error while posting")
@@ -411,7 +493,7 @@ func (proxmox ProxMox) PutForm(endpoint string, form url.Values) (map[string]int
 	if proxmox.connectionCSRFPreventionToken != "" {
 		req.Header.Add("CSRFPreventionToken", proxmox.connectionCSRFPreventionToken)
 	}
-	r, err := proxmox.client.Do(req)
+	r, err := proxmox.Client.Do(req)
 	defer r.Body.Close()
 	if err != nil {
 		fmt.Println("Error while puting")
