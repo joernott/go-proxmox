@@ -129,7 +129,7 @@ func (qemu QemuVM) Config() (QemuConfig, error) {
 	case float64:
 		config.Sockets = results["sockets"].(float64)
 	}
-	disktype := [3]string{"virtio", "sata", "ide"}
+	disktype := [4]string{"virtio", "sata", "ide", "scsi"}
 	disknum := [4]string{"0", "1", "2", "3"}
 	config.Disks = make(map[string]string)
 	for _, d := range disktype {
