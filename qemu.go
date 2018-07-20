@@ -94,6 +94,7 @@ func (qemu QemuVM) Config() (QemuConfig, error) {
 	var results map[string]interface{}
 	var config QemuConfig
 	var err error
+	var description string
 
 	//fmt.Print("!QemuConfig ", qemu.VMId)
 
@@ -103,6 +104,9 @@ func (qemu QemuVM) Config() (QemuConfig, error) {
 	if err != nil {
 		return config, err
 	}
+	if description, _ = results["description"].(string); err != nil {
+		return config, err
+	}
 	config = QemuConfig{
 		Bootdisk:    results["bootdisk"].(string),
 		Cores:       results["cores"].(float64),
@@ -110,7 +114,7 @@ func (qemu QemuVM) Config() (QemuConfig, error) {
 		Memory:      results["memory"].(float64),
 		Sockets:     results["sockets"].(float64),
 		SMBios1:     results["smbios1"].(string),
-		Description: results["description"].(string),
+		Description: description,
 	}
 
 	switch results["cores"].(type) {
@@ -125,7 +129,7 @@ func (qemu QemuVM) Config() (QemuConfig, error) {
 	case float64:
 		config.Sockets = results["sockets"].(float64)
 	}
-	disktype := [3]string{"virtio", "sata", "ide"}
+	disktype := [4]string{"virtio", "sata", "ide", "scsi"}
 	disknum := [4]string{"0", "1", "2", "3"}
 	config.Disks = make(map[string]string)
 	for _, d := range disktype {
@@ -306,14 +310,14 @@ func (qemu QemuVM) CloneToPool(newId float64, name string, targetName string, po
 	return t, nil
 }
 
-func (qemu QemuVM) SetDescription(description string) (error) {
+func (qemu QemuVM) SetDescription(description string) error {
 	var target string
 	var err error
 
 	target = "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/config"
 
 	form := url.Values{
-		"description":  {description},
+		"description": {description},
 	}
 
 	_, err = qemu.Node.Proxmox.PutForm(target, form)
@@ -324,14 +328,14 @@ func (qemu QemuVM) SetDescription(description string) (error) {
 	return nil
 }
 
-func (qemu QemuVM) SetMemory(memory string) (error) {
+func (qemu QemuVM) SetMemory(memory string) error {
 	var target string
 	var err error
 
 	target = "nodes/" + qemu.Node.Node + "/qemu/" + strconv.FormatFloat(qemu.VMId, 'f', 0, 64) + "/config"
 
 	form := url.Values{
-		"memory":  {memory},
+		"memory": {memory},
 	}
 
 	_, err = qemu.Node.Proxmox.PutForm(target, form)

@@ -1,8 +1,8 @@
 package proxmox
 
 type Pool struct {
-	Poolid       string  `json:"poolid"`
-	proxmox    ProxMox
+	Poolid  string `json:"poolid"`
+	proxmox ProxMox
 }
 
 type PoolList map[string]Pool
