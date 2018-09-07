@@ -37,7 +37,7 @@ func NewProxMox(HostName string, UserName string, Password string) (*ProxMox, er
 	var domain string
 	//fmt.Println("!NewProxMox")
 
-	if !strings.HasSuffix(UserName, "@pam") && !strings.HasSuffix(UserName, "@pve") {
+	if !strings.Contains(UserName, "@") {
 		UserName = UserName + "@pam"
 	}
 
