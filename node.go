@@ -33,6 +33,7 @@ func (node Node) Qemu() (QemuList, error) {
 	var list QemuList
 	var vm QemuVM
 	var results []interface{}
+	var VMIdFloat float64
 
 	//fmt.Println("!Qemu")
 
@@ -45,9 +46,13 @@ func (node Node) Qemu() (QemuList, error) {
 	results = data["data"].([]interface{})
 	for _, v0 := range results {
 		v := v0.(map[string]interface{})
-		VMIdFloat, err := strconv.ParseFloat(v["vmid"].(string), 64)
-		if err != nil {
-			return nil, err
+		if _, ok := v["vmid"].(string); ok {
+			VMIdFloat, err = strconv.ParseFloat(v["vmid"].(string), 64)
+			if err != nil {
+				return nil, err
+			} else {
+				VMIdFloat = v["vmid"].(float64)
+			}
 		}
 		vm = QemuVM{
 			Mem:    v["mem"].(float64),
