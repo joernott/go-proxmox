@@ -50,10 +50,11 @@ func (node Node) Qemu() (QemuList, error) {
 			VMIdFloat, err = strconv.ParseFloat(v["vmid"].(string), 64)
 			if err != nil {
 				return nil, err
-			} else {
-				VMIdFloat = v["vmid"].(float64)
 			}
+		} else {
+			VMIdFloat = v["vmid"].(float64)
 		}
+
 		vm = QemuVM{
 			Mem:    v["mem"].(float64),
 			CPUs:   v["cpus"].(float64),
